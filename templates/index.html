@@ -1,0 +1,180 @@
+{% extends "base.html" %} {% block title %}Iglesia CEMOA - Centro Mundial de Oración y Adoración {% endblock %} {% block content %}
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-decorations">
+    <div class="decoration decoration-1"></div>
+    <div class="decoration decoration-2"></div>
+  </div>
+
+  <div class="container hero-content">
+    <div class="hero-badge">
+      <span class="pulse-dot"></span>
+      Transmisión en vivo cada Domingo
+    </div>
+
+    <h1 class="hero-title">
+      Bienvenido a <span class="hero-highlight">Iglesia CEMOA</span>
+    </h1>
+
+    <p class="hero-description">
+      Un lugar para crecer espiritualmente, encontrar propósito y ser parte de
+      una comunidad llena de fe, esperanza y amor.
+    </p>
+
+    <div class="hero-buttons">
+      <a href="{{ url_for('adoracion') }}" class="btn btn-light btn-lg">
+        <i data-lucide="play"></i>
+        Ver Transmisión en Vivo
+      </a>
+      <a href="{{ url_for('servicios') }}" class="btn btn-outline-light btn-lg">
+        <i data-lucide="calendar"></i>
+        Ver Horarios
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-value">10+</span>
+        <span class="stat-label">Años de Ministerio</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">70+</span>
+        <span class="stat-label">Miembros</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">3</span>
+        <span class="stat-label">Servicios Semanales</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <div class="scroll-mouse">
+      <div class="scroll-dot"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Services Section -->
+<section class="section section-light">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-subtitle">Nuestros Servicios</p>
+      <h2 class="section-title">Actividades para Toda la Familia</h2>
+      <p class="section-description">
+        Ofrecemos diversas oportunidades para que crezcas en tu fe y te conectes
+        con nuestra comunidad.
+      </p>
+    </div>
+
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon service-icon-primary">
+          <i data-lucide="calendar"></i>
+        </div>
+        <h3 class="service-title">Servicio Dominical</h3>
+        <p class="service-description">
+          Únete a nosotros cada domingo para un tiempo de adoración y enseñanza
+          de la Palabra de Dios.
+        </p>
+        <p class="service-schedule">Domingos 8:00 AM y 10:30 AM</p>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon service-icon-accent">
+          <i data-lucide="book-open"></i>
+        </div>
+        <h3 class="service-title">Estudio Bíblico</h3>
+        <p class="service-description">
+          Profundiza en las Escrituras con nuestros estudios bíblicos
+          interactivos y enriquecedores.
+        </p>
+        <p class="service-schedule">Miércoles 7:00 PM</p>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon service-icon-primary">
+          <i data-lucide="users"></i>
+        </div>
+        <h3 class="service-title">Grupos Pequeños</h3>
+        <p class="service-description">
+          Conecta con otros creyentes en un ambiente íntimo de comunión y
+          crecimiento espiritual.
+        </p>
+        <p class="service-schedule">Varios horarios disponibles</p>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon service-icon-accent">
+          <i data-lucide="heart"></i>
+        </div>
+        <h3 class="service-title">Ministerio de Oración</h3>
+        <p class="service-description">
+          Experimenta el poder de la oración colectiva y recibe apoyo espiritual
+          de nuestra comunidad.
+        </p>
+        <p class="service-schedule">Viernes 6:00 PM</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured Section -->
+<section class="section section-muted">
+  <div class="container">
+    <div class="featured-grid">
+      <div class="featured-content">
+        <p class="section-subtitle">Mensaje Destacado</p>
+        <h2 class="section-title">El Poder de la Fe</h2>
+        <p class="featured-description">
+          Descubre cómo la fe puede mover montañas y transformar tu vida
+          completamente. Un mensaje poderoso que te llevará a nuevos niveles de
+          confianza en Dios.
+        </p>
+        <div class="featured-meta">
+          <span class="meta-item">
+            <i data-lucide="user"></i>
+            Pastor Juan García
+          </span>
+          <span class="meta-item">
+            <i data-lucide="calendar"></i>
+            19 Enero 2026
+          </span>
+        </div>
+        <a href="{{ url_for('predicas') }}" class="btn btn-primary btn-lg">
+          <i data-lucide="play"></i>
+          Ver Mensaje
+        </a>
+      </div>
+      <div class="featured-video">
+        <div class="video-placeholder">
+          <div class="play-button">
+            <i data-lucide="play"></i>
+          </div>
+          <span class="video-duration">45 min</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section-cta">
+  <div class="container cta-content">
+    <h2 class="cta-title">Únete a Nuestra Comunidad</h2>
+    <p class="cta-description">
+      Te invitamos a ser parte de nuestra familia. Juntos crecemos en fe y nos
+      apoyamos mutuamente en el camino de la vida.
+    </p>
+    <div class="cta-buttons">
+      <a href="{{ url_for('servicios') }}" class="btn btn-light btn-lg">
+        Visítanos Este Domingo
+      </a>
+      <a href="#contacto" class="btn btn-outline-light btn-lg">
+        Más Información
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

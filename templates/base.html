@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Iglesia CEMOA - Un lugar para crecer espiritualmente y encontrar propósito."
+    />
+    <title>{% block title %}Iglesia CEMOA{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Main CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <div class="container header-container">
+        <!-- Logo Section -->
+        <a href="{{ url_for('index') }}" class="logo-link">
+          <div class="logo-wrapper">
+            <!-- Reemplaza con tu logo PNG,WEBP -->
+            <img
+              src="{{ url_for('static', filename='images/logo.webp') }}"
+              alt="CEMOA Logo"
+              class="logo-image"
+              onerror="
+                this.style.display = 'none';
+                this.nextElementSibling.style.display = 'flex';
+              "
+            />
+            <div class="logo-fallback">CEMOA</div>
+          </div>
+          <div class="logo-text">
+            <h1 class="logo-title">Iglesia CEMOA</h1>
+            <p class="logo-subtitle">Centro Mundial de Oración y Adoración</p>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="nav-desktop">
+          <a
+            href="{{ url_for('index') }}"
+            class="nav-link {% if request.endpoint == 'index' %}active{% endif %}"
+          >
+            <span>Inicio</span>
+          </a>
+          <a
+            href="{{ url_for('adoracion') }}"
+            class="nav-link {% if request.endpoint == 'adoracion' %}active{% endif %}"
+          >
+            <span>Adoración</span>
+          </a>
+          <a
+            href="{{ url_for('servicios') }}"
+            class="nav-link {% if request.endpoint == 'servicios' %}active{% endif %}"
+          >
+            <span>Servicios</span>
+          </a>
+          <a
+            href="{{ url_for('predicas') }}"
+            class="nav-link {% if request.endpoint == 'predicas' %}active{% endif %}"
+          >
+            <span>Prédicas</span>
+          </a>
+          <a href="#contacto" class="btn btn-primary">Contáctanos</a>
+        </nav>
+
+        <!-- Mobile Menu Button -->
+        <button
+          class="mobile-menu-btn"
+          onclick="toggleMobileMenu()"
+          aria-label="Menu"
+        >
+          <i data-lucide="menu" class="menu-icon"></i>
+          <i data-lucide="x" class="close-icon" style="display: none"></i>
+        </button>
+      </div>
+
+      <!-- Mobile Navigation -->
+      <nav class="nav-mobile" id="mobileNav">
+        <a href="{{ url_for('index') }}" class="nav-link-mobile">Inicio</a>
+        <a href="{{ url_for('adoracion') }}" class="nav-link-mobile"
+          >Adoración</a
+        >
+        <a href="{{ url_for('servicios') }}" class="nav-link-mobile"
+          >Servicios</a
+        >
+        <a href="{{ url_for('predicas') }}" class="nav-link-mobile">Prédicas</a>
+        <a href="#contacto" class="btn btn-primary btn-full">Contáctanos</a>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>{% block content %}{% endblock %}</main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <!-- Logo and Description -->
+          <div class="footer-section">
+            <a href="{{ url_for('index') }}" class="footer-logo-link">
+              <div class="footer-logo-wrapper">
+                <img
+                  src="{{ url_for('static', filename='images/logo.webp') }}"
+                  alt="Logo"
+                  class="footer-logo-image"
+                  onerror="
+                    this.style.display = 'none';
+                    this.nextElementSibling.style.display = 'flex';
+                  "
+                />
+                <div class="footer-logo-fallback">CEMOA</div>
+              </div>
+              <span class="footer-logo-text">Iglesia CEMOA</span>
+            </a>
+            <p class="footer-description">
+              Un lugar donde puedes crecer en tu fe, encontrar comunidad y
+              descubrir tu propósito en Cristo.
+            </p>
+            <div class="social-links">
+              <a href="#" class="social-link" aria-label="Facebook">
+                <i data-lucide="facebook"></i>
+              </a>
+              <a href="#" class="social-link" aria-label="Instagram">
+                <i data-lucide="instagram"></i>
+              </a>
+              <a href="#" class="social-link" aria-label="YouTube">
+                <i data-lucide="youtube"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Quick Links -->
+          <div class="footer-section">
+            <h3 class="footer-title">Enlaces Rápidos</h3>
+            <ul class="footer-links">
+              <li><a href="{{ url_for('index') }}">Inicio</a></li>
+              <li><a href="{{ url_for('adoracion') }}">Adoración</a></li>
+              <li><a href="{{ url_for('servicios') }}">Servicios</a></li>
+              <li><a href="{{ url_for('predicas') }}">Prédicas</a></li>
+            </ul>
+          </div>
+
+          <!-- Contact Info -->
+          <div class="footer-section">
+            <h3 class="footer-title">Contacto</h3>
+            <ul class="footer-contact">
+              <li>
+                <i data-lucide="map-pin"></i>
+                <span>cr 9 #8b-01 Cereté - Montería (Retiro de los Indios), Cereté, Colombia, 230550</span>
+              </li>
+              <li>
+                <i data-lucide="phone"></i>
+                <span>+1 (555) 123-4567</span>
+              </li>
+              <li>
+                <i data-lucide="mail"></i>
+                <span>iglesiacemoa@gmail.com</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Service Hours -->
+          <div class="footer-section">
+            <h3 class="footer-title">Horarios</h3>
+            <div class="footer-schedule">
+              <div class="schedule-item">
+                <i data-lucide="clock"></i>
+                <div>
+                  <p class="schedule-day">Domingo</p>
+                  <p class="schedule-time">8:00 AM - Servicio Familiar</p>
+                  <p class="schedule-time">10:30 AM - Servicio General</p>
+                </div>
+              </div>
+              <div class="schedule-item">
+                <i data-lucide="clock"></i>
+                <div>
+                  <p class="schedule-day">Miércoles</p>
+                  <p class="schedule-time">7:00 PM - Estudio Bíblico</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="footer-bottom">
+        <div class="container footer-bottom-content">
+          <p>&copy; 2026 Iglesia CEMOA. Todos los derechos reservados.</p>
+          <p class="footer-verse">
+            "Porque donde están dos o tres congregados en mi nombre, allí estoy
+            yo en medio de ellos." - Mateo 18:20
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+
+      // Mobile menu toggle
+      function toggleMobileMenu() {
+        const nav = document.getElementById("mobileNav");
+        const menuIcon = document.querySelector(".menu-icon");
+        const closeIcon = document.querySelector(".close-icon");
+
+        nav.classList.toggle("open");
+
+        if (nav.classList.contains("open")) {
+          menuIcon.style.display = "none";
+          closeIcon.style.display = "block";
+        } else {
+          menuIcon.style.display = "block";
+          closeIcon.style.display = "none";
+        }
+      }
+
+      // Close mobile menu on link click
+      document.querySelectorAll(".nav-link-mobile").forEach((link) => {
+        link.addEventListener("click", () => {
+          document.getElementById("mobileNav").classList.remove("open");
+          document.querySelector(".menu-icon").style.display = "block";
+          document.querySelector(".close-icon").style.display = "none";
+        });
+      });
+
+      // Header scroll effect
+      let lastScroll = 0;
+      window.addEventListener("scroll", () => {
+        const header = document.querySelector(".header");
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 50) {
+          header.classList.add("scrolled");
+        } else {
+          header.classList.remove("scrolled");
+        }
+
+        lastScroll = currentScroll;
+      });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,152 @@
+{% extends "base.html" %} {% block title %}Adoración en Vivo - Iglesia CEMOA{% endblock %} {% block content %}
+<!-- Hero Section -->
+<section class="page-hero">
+  <div class="hero-decoration"></div>
+  <div class="container page-hero-content">
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      En Vivo Ahora
+    </div>
+    <h1 class="page-hero-title">Adoración en Vivo</h1>
+    <p class="page-hero-description">
+      Únete a nosotros en tiempo real para un momento de alabanza y adoración.
+      Experimenta la presencia de Dios desde cualquier lugar.
+    </p>
+  </div>
+</section>
+
+<!-- Live Stream Section -->
+<section class="section section-light">
+  <div class="container">
+    <div class="video-container">
+      <div class="video-player">
+        <div class="video-overlay">
+          <div class="play-button-large">
+            <i data-lucide="play"></i>
+          </div>
+          <p class="video-title">Transmisión en Vivo</p>
+          <p class="video-subtitle">Haz clic para reproducir</p>
+        </div>
+        <!-- Uncomment when you have a stream -->
+        <!-- <video id="livePlayer" controls autoplay playsinline>
+                    <source src="/static/videos/stream.m3u8" type="application/x-mpegURL">
+                    Tu navegador no soporta la reproducción de video.
+                </video> -->
+      </div>
+
+      <div class="stream-info-grid">
+        <div class="stream-info-card">
+          <div class="stream-info-header">
+            <i data-lucide="radio"></i>
+            <span>Estado</span>
+          </div>
+          <p class="stream-info-value">En Vivo</p>
+          <p class="stream-info-label">Transmitiendo ahora</p>
+        </div>
+
+        <div class="stream-info-card">
+          <div class="stream-info-header">
+            <i data-lucide="users"></i>
+            <span>Espectadores</span>
+          </div>
+          <p class="stream-info-value" id="viewerCount">127</p>
+          <p class="stream-info-label">Conectados en este momento</p>
+        </div>
+
+        <div class="stream-info-card">
+          <div class="stream-info-header">
+            <i data-lucide="clock"></i>
+            <span>Duración</span>
+          </div>
+          <p class="stream-info-value" id="streamDuration">1:24:35</p>
+          <p class="stream-info-label">Tiempo de transmisión</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Schedule Section -->
+<section class="section section-muted">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">Horarios de Transmisión</h2>
+      <p class="section-description">
+        No te pierdas nuestras transmisiones semanales. Conéctate con nosotros
+        desde cualquier parte del mundo.
+      </p>
+    </div>
+
+    <div class="schedule-list">
+      <div class="schedule-card">
+        <div class="schedule-card-icon">
+          <i data-lucide="clock"></i>
+        </div>
+        <div class="schedule-card-content">
+          <p class="schedule-card-title">Servicio Familiar</p>
+          <p class="schedule-card-time">Domingo - 8:00 AM</p>
+        </div>
+        <span class="live-tag">
+          <i data-lucide="radio"></i>
+          En Vivo
+        </span>
+      </div>
+
+      <div class="schedule-card">
+        <div class="schedule-card-icon">
+          <i data-lucide="clock"></i>
+        </div>
+        <div class="schedule-card-content">
+          <p class="schedule-card-title">Servicio General</p>
+          <p class="schedule-card-time">Domingo - 10:30 AM</p>
+        </div>
+        <span class="live-tag">
+          <i data-lucide="radio"></i>
+          En Vivo
+        </span>
+      </div>
+
+      <div class="schedule-card">
+        <div class="schedule-card-icon">
+          <i data-lucide="clock"></i>
+        </div>
+        <div class="schedule-card-content">
+          <p class="schedule-card-title">Estudio Bíblico</p>
+          <p class="schedule-card-time">Miércoles - 7:00 PM</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-8">
+      <button class="btn btn-primary">
+        <i data-lucide="bell"></i>
+        Activar Recordatorio
+      </button>
+    </div>
+  </div>
+</section>
+{% endblock %} {% block extra_js %}
+<script>
+  // Simulate live stream duration counter
+  let seconds = 5075; // 1:24:35
+
+  function updateDuration() {
+    seconds++;
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    document.getElementById("streamDuration").textContent =
+      `${hours}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  setInterval(updateDuration, 1000);
+
+  // Simulate viewer count
+  function updateViewers() {
+    const viewers = 120 + Math.floor(Math.random() * 20);
+    document.getElementById("viewerCount").textContent = viewers;
+  }
+
+  setInterval(updateViewers, 5000);
+</script>
+{% endblock %}

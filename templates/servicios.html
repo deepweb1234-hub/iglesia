@@ -1,0 +1,153 @@
+{% extends "base.html" %} {% block title %}Servicios - Iglesia CEMOA{% endblock
+%} {% block content %}
+<!-- Hero Section -->
+<section class="page-hero">
+  <div class="hero-decoration"></div>
+  <div class="container page-hero-content">
+    <h1 class="page-hero-title">Horarios de Servicios</h1>
+    <p class="page-hero-description">
+      Descubre todos los servicios y ministerios que ofrecemos. Hay un lugar
+      para ti en nuestra comunidad.
+    </p>
+  </div>
+</section>
+
+<!-- Main Services -->
+<section class="section section-light">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-subtitle">Servicios Principales</p>
+      <h2 class="section-title">Únete a Nosotros Cada Semana</h2>
+    </div>
+
+    <div class="main-services-grid">
+      {% for service in services %}
+      <div class="main-service-card">
+        <div class="main-service-icon">
+          <i data-lucide="{{ service.icon }}"></i>
+        </div>
+        <h3 class="main-service-title">{{ service.title }}</h3>
+        <div class="main-service-meta">
+          <span><i data-lucide="calendar"></i> {{ service.day }}</span>
+          <span><i data-lucide="clock"></i> {{ service.time }}</span>
+        </div>
+        <p class="main-service-description">{{ service.description }}</p>
+        <ul class="main-service-features">
+          {% for feature in service.features %}
+          <li><span class="feature-dot"></span> {{ feature }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Ministries -->
+<section class="section section-muted">
+  <div class="container">
+    <div class="section-header">
+      <p class="section-subtitle">Ministerios</p>
+      <h2 class="section-title">Encuentra tu Lugar</h2>
+      <p class="section-description">
+        Tenemos ministerios para todas las edades y etapas de la vida.
+      </p>
+    </div>
+
+    <div class="ministries-grid">
+      {% for ministry in ministries %}
+      <div class="ministry-card">
+        <div class="ministry-icon">
+          <i data-lucide="{{ ministry.icon }}"></i>
+        </div>
+        <h3 class="ministry-title">{{ ministry.title }}</h3>
+        <p class="ministry-description">{{ ministry.description }}</p>
+        <p class="ministry-schedule">{{ ministry.schedule }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Location -->
+<section class="section section-light">
+  <div class="container">
+    <div class="location-grid">
+      <div class="location-content">
+        <p class="section-subtitle">Ubicación</p>
+        <h2 class="section-title">¿Cómo Llegar?</h2>
+        <p class="location-description">
+          Estamos ubicados en un lugar accesible para toda la comunidad. Te
+          esperamos con los brazos abiertos.
+        </p>
+
+        <div class="location-info">
+          <div class="location-item">
+            <div class="location-item-icon">
+              <i data-lucide="map-pin"></i>
+            </div>
+            <div>
+              <p class="location-item-title">Dirección</p>
+              <p class="location-item-value">
+                cr 9 #8b-01 Cereté - Montería (Retiro de los Indios), Cereté,
+                Colombia, 230550
+              </p>
+            </div>
+          </div>
+
+          <div class="location-item">
+            <div class="location-item-icon">
+              <i data-lucide="clock"></i>
+            </div>
+            <div>
+              <p class="location-item-title">Horario de Oficina</p>
+              <p class="location-item-value">
+                Lunes a Viernes: 9:00 AM - 5:00 PM
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <a
+          href="https://maps.app.goo.gl/hRqK1hqkShhupinb8"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary"
+        >
+          <i data-lucide="external-link"></i>
+          Ver en Google Maps
+        </a>
+      </div>
+
+      <div class="location-map">
+        <div class="map-container" id="mapContainer">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d492.77625730212145!2d-75.8137251!3d8.8600267!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e5a2964b3c0c7e1%3A0xe23dc6ec77ad7945!2sCentro%20Mundial%20De%20Oracion%20Y%20Adoraci%C3%B3n%20-%20CEMOA!5e0!3m2!1ses-419!2sco!4v1770005633908!5m2!1ses-419!2sco"
+            allowfullscreen
+            loading="lazy"
+          >
+          </iframe>
+
+          <!-- Overlay -->
+          <div class="map-overlay" id="mapOverlay">
+            <i data-lucide="map-pin"></i>
+            <p>Mapa interactivo</p>
+            <p class="map-address">Centro Mundial de Oración y Adoración</p>
+          </div>
+        </div>
+      </div>
+
+     
+    </div>
+  </div>
+</section>
+{% endblock %} {% block extra_js %}
+ <script>
+        const mapContainer = document.getElementById("mapContainer");
+        const mapOverlay = document.getElementById("mapOverlay");
+
+        mapOverlay.addEventListener("click", () => {
+          mapContainer.classList.add("active");
+        });
+      </script>
+{% endblock %}

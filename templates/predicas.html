@@ -1,0 +1,284 @@
+{% extends "base.html" %} {% block title %}Prédicas - Iglesia CEMOA{% endblock
+%} {% block content %}
+
+<!-- Hero Section -->
+<section class="page-hero">
+  <div class="hero-decoration"></div>
+  <div class="container page-hero-content">
+    <h1 class="page-hero-title">Prédicas Recientes</h1>
+    <p class="page-hero-description">
+      Accede a nuestro archivo de mensajes y continúa creciendo en tu fe.
+    </p>
+  </div>
+</section>
+
+<!-- Featured Sermon -->
+{% if featured %}
+<section class="section section-light">
+  <div class="container">
+    <p class="section-subtitle">Mensaje Destacado</p>
+
+    <div class="featured-sermon-grid">
+      <div
+        class="featured-sermon-video"
+        onclick="openModal('{{ featured.video_url }}')"
+        style="cursor: pointer; position: relative"
+      >
+        <div class="play-overlay">
+          <i data-lucide="play"></i>
+        </div>
+        <span class="video-duration">{{ featured.duration }}</span>
+      </div>
+
+      <div class="featured-sermon-content">
+        <h2 class="featured-sermon-title">{{ featured.title }}</h2>
+        <div class="featured-sermon-meta">
+          <span><i data-lucide="user"></i> {{ featured.speaker }}</span>
+          <span><i data-lucide="calendar"></i> {{ featured.date }}</span>
+          <span><i data-lucide="clock"></i> {{ featured.duration }}</span>
+        </div>
+        <p class="featured-sermon-description">{{ featured.description }}</p>
+
+        <button
+          class="btn btn-primary"
+          onclick="openModal('{{ featured.video_url }}')"
+        >
+          <i data-lucide="play"></i>
+          Ver Ahora
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- Sermons Archive -->
+<section class="section section-muted">
+  <div class="container">
+    <!-- Search & Filter -->
+    <div class="search-filter-bar">
+      <div class="search-input-wrapper">
+        <i data-lucide="search"></i>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Buscar prédicas..."
+          class="search-input"
+        />
+      </div>
+
+      <div class="filter-buttons">
+        {% for category in categories %}
+        <button
+          class="filter-btn {% if category == 'Todas' %}active{% endif %}"
+          data-category="{{ category }}"
+        >
+          {{ category }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="sermons-grid" id="sermonsGrid">
+      {% for sermon in sermons %} {% if not sermon.featured %}
+      <div
+        class="sermon-card"
+        data-category="{{ sermon.category }}"
+        data-title="{{ sermon.title|lower }}"
+        data-speaker="{{ sermon.speaker|lower }}"
+        onclick="openModal('{{ sermon.video_url }}')"
+        style="cursor: pointer"
+      >
+        <div class="sermon-card-header">
+          <div class="sermon-card-info">
+            <h3 class="sermon-card-title">{{ sermon.title }}</h3>
+            <div class="sermon-card-meta">
+              <span><i data-lucide="user"></i> {{ sermon.speaker }}</span>
+              <span><i data-lucide="calendar"></i> {{ sermon.date }}</span>
+            </div>
+          </div>
+
+          <div class="sermon-play-btn">
+            <i data-lucide="play"></i>
+          </div>
+        </div>
+
+        <p class="sermon-card-description">{{ sermon.description }}</p>
+
+        <div class="sermon-card-footer">
+          <span class="sermon-category">{{ sermon.category }}</span>
+          <span class="sermon-duration">
+            <i data-lucide="clock"></i> {{ sermon.duration }}
+          </span>
+        </div>
+      </div>
+      {% endif %} {% endfor %}
+    </div>
+
+    <div class="no-results" id="noResults" style="display: none">
+      <p>No se encontraron prédicas.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 🎬 VIDEO MODAL -->
+<div id="videoModal" class="video-modal">
+  <div class="video-modal-content">
+    <span class="close-btn" onclick="closeModal()">✖</span>
+    <iframe
+      id="modalVideo"
+      frameborder="0"
+      allow="autoplay; fullscreen"
+      allowfullscreen
+    >
+    </iframe>
+  </div>
+</div>
+
+{% endblock %} {% block extra_js %}
+
+<style>
+  .video-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .video-modal-content {
+    width: 90%;
+    max-width: 900px;
+    aspect-ratio: 16/9;
+    position: relative;
+    animation: scaleIn 0.3s ease;
+  }
+
+  .video-modal iframe {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+  }
+
+  .play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    font-size: 50px;
+    border-radius: 16px;
+    transition: 0.3s;
+  }
+
+  .play-overlay:hover {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.8);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+</style>
+
+<script>
+  lucide.createIcons();
+
+  function openModal(url) {
+    const modal = document.getElementById("videoModal");
+    const iframe = document.getElementById("modalVideo");
+
+    iframe.src = url + "?autoplay=1";
+    modal.style.display = "flex";
+  }
+
+  function closeModal() {
+    const modal = document.getElementById("videoModal");
+    const iframe = document.getElementById("modalVideo");
+
+    iframe.src = "";
+    modal.style.display = "none";
+  }
+
+  window.onclick = function (e) {
+    const modal = document.getElementById("videoModal");
+    if (e.target === modal) {
+      closeModal();
+    }
+  };
+
+  /* 🔎 FILTRO */
+  const searchInput = document.getElementById("searchInput");
+  const filterBtns = document.querySelectorAll(".filter-btn");
+  const sermonCards = document.querySelectorAll(".sermon-card");
+  const noResults = document.getElementById("noResults");
+
+  let currentCategory = "Todas";
+
+  function filterSermons() {
+    const searchTerm = searchInput.value.toLowerCase();
+    let visibleCount = 0;
+
+    sermonCards.forEach((card) => {
+      const title = card.dataset.title;
+      const speaker = card.dataset.speaker;
+      const category = card.dataset.category;
+
+      const matchesSearch =
+        title.includes(searchTerm) || speaker.includes(searchTerm);
+
+      const matchesCategory =
+        currentCategory === "Todas" || category === currentCategory;
+
+      if (matchesSearch && matchesCategory) {
+        card.style.display = "block";
+        visibleCount++;
+      } else {
+        card.style.display = "none";
+      }
+    });
+
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+  }
+
+  searchInput.addEventListener("input", filterSermons);
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentCategory = btn.dataset.category;
+      filterSermons();
+    });
+  });
+</script>
+
+{% endblock %}
