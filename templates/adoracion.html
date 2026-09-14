@@ -130,8 +130,8 @@
   const statusLabel = document.getElementById("streamStatusLabel");
 
   // Inicialización del reproductor inteligente
-  if (Hls.isSupported()) {
-    const hls = new Hls({
+  if (HLS.isSupported()) {
+    const hls = new HLS({
       maxBufferSize: 0,         // Evita almacenar caché innecesaria para corregir el lag
       liveSyncDurationCount: 3, // Sincroniza al punto más cercano del en vivo
       enableWorker: true
