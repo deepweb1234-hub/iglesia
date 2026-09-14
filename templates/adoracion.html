@@ -1,194 +1,1160 @@
-{% extends "base.html" %} {% block title %}Adoración en Vivo - Iglesia CEMOA{% endblock %} {% block content %}
-<!-- Hero Section -->
-<section class="page-hero">
-  <div class="hero-decoration"></div>
-  <div class="container page-hero-content">
-    <div class="live-badge">
-      <span class="live-dot"></span>
-      En Vivo Ahora
-    </div>
-    <h1 class="page-hero-title">Adoración en Vivo</h1>
-    <p class="page-hero-description">
-      Únete a nosotros en tiempo real para un momento de alabanza y adoración.
-      Experimenta la presencia de Dios desde cualquier lugar.
-    </p>
-  </div>
-</section>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- Live Stream Section -->
-<section class="section section-light">
-  <div class="container">
-    <div class="video-container">
-      <div class="video-player" style="background: #000; position: relative; overflow: hidden; border-radius: 8px;">
-        <!-- REPRODUCTOR HLS ADAPTADO PARA LA IGLESIA CEMOA -->
-        <video id="livePlayer" controls autoplay muted playsinline style="width: 100%; height: 100%; display: block; background: #000;">
-            Tu navegador no soporta la reproducción de video en vivo.
-        </video>
-      </div>
+    <meta
+      name="description"
+      content="Iglesia CEMOA - Un lugar para crecer espiritualmente y encontrar propósito."
+    />
 
-      <div class="stream-info-grid">
-        <div class="stream-info-card">
-          <div class="stream-info-header">
-            <i data-lucide="radio"></i>
-            <span>Estado</span>
+    <title>Adoración en Vivo - Iglesia CEMOA</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <!-- Main CSS -->
+    <link
+      rel="stylesheet"
+      href="/static/css/styles.css"
+    />
+  </head>
+
+  <body>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="container header-container">
+
+        <!-- Logo Section -->
+        <a href="/" class="logo-link">
+          <div class="logo-wrapper">
+
+            <!-- Logo -->
+            <img
+              src="/static/images/logo.webp"
+              alt="CEMOA Logo"
+              class="logo-image"
+              onerror="
+                this.style.display = 'none';
+                this.nextElementSibling.style.display = 'flex';
+              "
+            />
+
+            <div class="logo-fallback">CEMOA</div>
           </div>
-          <p class="stream-info-value" id="streamStatusText">Conectando...</p>
-          <p class="stream-info-label" id="streamStatusLabel">Verificando señal</p>
-        </div>
 
-        <div class="stream-info-card">
-          <div class="stream-info-header">
-            <i data-lucide="users"></i>
-            <span>Espectadores</span>
+          <div class="logo-text">
+            <h1 class="logo-title">Iglesia CEMOA</h1>
+            <p class="logo-subtitle">
+              Centro Mundial de Oración y Adoración
+            </p>
           </div>
-          <p class="stream-info-value" id="viewerCount">0</p>
-          <p class="stream-info-label">Conectados en este momento</p>
-        </div>
+        </a>
 
-        <div class="stream-info-card">
-          <div class="stream-info-header">
-            <i data-lucide="clock"></i>
-            <span>Duración</span>
+        <!-- Desktop Navigation -->
+        <nav class="nav-desktop">
+
+          <a href="/" class="nav-link">
+            <span>Inicio</span>
+          </a>
+
+          <a href="/adoracion" class="nav-link active">
+            <span>Adoración</span>
+          </a>
+
+          <a href="/servicios" class="nav-link">
+            <span>Servicios</span>
+          </a>
+
+          <a href="/predicas" class="nav-link">
+            <span>Prédicas</span>
+          </a>
+
+          <a href="#contacto" class="btn btn-primary">
+            Contáctanos
+          </a>
+
+        </nav>
+
+        <!-- Mobile Menu Button -->
+        <button
+          class="mobile-menu-btn"
+          onclick="toggleMobileMenu()"
+          aria-label="Menu"
+        >
+          <i data-lucide="menu" class="menu-icon"></i>
+          <i
+            data-lucide="x"
+            class="close-icon"
+            style="display: none"
+          ></i>
+        </button>
+
+      </div>
+
+      <!-- Mobile Navigation -->
+      <nav class="nav-mobile" id="mobileNav">
+
+        <a href="/" class="nav-link-mobile">
+          Inicio
+        </a>
+
+        <a href="/adoracion" class="nav-link-mobile">
+          Adoración
+        </a>
+
+        <a href="/servicios" class="nav-link-mobile">
+          Servicios
+        </a>
+
+        <a href="/predicas" class="nav-link-mobile">
+          Prédicas
+        </a>
+
+        <a
+          href="#contacto"
+          class="btn btn-primary btn-full"
+        >
+          Contáctanos
+        </a>
+
+      </nav>
+    </header>
+
+
+    <!-- Main Content -->
+    <main>
+
+      <!-- Hero Section -->
+      <section class="page-hero">
+
+        <div class="hero-decoration"></div>
+
+        <div class="container page-hero-content">
+
+          <div class="live-badge">
+            <span class="live-dot"></span>
+            En Vivo Ahora
           </div>
-          <p class="stream-info-value" id="streamDuration">0:00:00</p>
-          <p class="stream-info-label">Tiempo de transmisión</p>
+
+          <h1 class="page-hero-title">
+            Adoración en Vivo
+          </h1>
+
+          <p class="page-hero-description">
+            Únete a nosotros en tiempo real para un momento de alabanza y adoración.
+            Experimenta la presencia de Dios desde cualquier lugar.
+          </p>
+
         </div>
+
+      </section>
+
+
+      <!-- Live Stream Section -->
+      <section class="section section-light">
+
+        <div class="container">
+
+          <div class="video-container">
+
+            <div
+              class="video-player"
+              style="
+                background: #000;
+                position: relative;
+                overflow: hidden;
+                border-radius: 8px;
+              "
+            >
+
+              <!-- REPRODUCTOR HLS -->
+              <video
+                id="livePlayer"
+                controls
+                autoplay
+                muted
+                playsinline
+                preload="auto"
+                style="
+                  width: 100%;
+                  height: 100%;
+                  display: block;
+                  background: #000;
+                "
+              >
+                Tu navegador no soporta la reproducción de video en vivo.
+              </video>
+
+            </div>
+
+
+            <!-- Stream Information -->
+            <div class="stream-info-grid">
+
+              <!-- Estado -->
+              <div class="stream-info-card">
+
+                <div class="stream-info-header">
+                  <i data-lucide="radio"></i>
+                  <span>Estado</span>
+                </div>
+
+                <p
+                  class="stream-info-value"
+                  id="streamStatusText"
+                >
+                  Conectando...
+                </p>
+
+                <p
+                  class="stream-info-label"
+                  id="streamStatusLabel"
+                >
+                  Verificando señal
+                </p>
+
+              </div>
+
+
+              <!-- Espectadores -->
+              <div class="stream-info-card">
+
+                <div class="stream-info-header">
+                  <i data-lucide="users"></i>
+                  <span>Espectadores</span>
+                </div>
+
+                <p
+                  class="stream-info-value"
+                  id="viewerCount"
+                >
+                  0
+                </p>
+
+                <p class="stream-info-label">
+                  Conectados en este momento
+                </p>
+
+              </div>
+
+
+              <!-- Duración -->
+              <div class="stream-info-card">
+
+                <div class="stream-info-header">
+                  <i data-lucide="clock"></i>
+                  <span>Duración</span>
+                </div>
+
+                <p
+                  class="stream-info-value"
+                  id="streamDuration"
+                >
+                  0:00:00
+                </p>
+
+                <p class="stream-info-label">
+                  Tiempo de transmisión
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- Schedule Section -->
+      <section class="section section-muted">
+
+        <div class="container">
+
+          <div class="section-header">
+
+            <h2 class="section-title">
+              Horarios de Transmisión
+            </h2>
+
+            <p class="section-description">
+              No te pierdas nuestras transmisiones semanales.
+              Conéctate con nosotros desde cualquier parte del mundo.
+            </p>
+
+          </div>
+
+
+          <div class="schedule-list">
+
+            <div class="schedule-card">
+
+              <div class="schedule-card-icon">
+                <i data-lucide="clock"></i>
+              </div>
+
+              <div class="schedule-card-content">
+
+                <p class="schedule-card-title">
+                  Servicio Familiar
+                </p>
+
+                <p class="schedule-card-time">
+                  Domingo - 8:00 AM
+                </p>
+
+              </div>
+
+              <span class="live-tag">
+                <i data-lucide="radio"></i>
+                En Vivo
+              </span>
+
+            </div>
+
+
+            <div class="schedule-card">
+
+              <div class="schedule-card-icon">
+                <i data-lucide="clock"></i>
+              </div>
+
+              <div class="schedule-card-content">
+
+                <p class="schedule-card-title">
+                  Servicio General
+                </p>
+
+                <p class="schedule-card-time">
+                  Domingo - 10:30 AM
+                </p>
+
+              </div>
+
+              <span class="live-tag">
+                <i data-lucide="radio"></i>
+                En Vivo
+              </span>
+
+            </div>
+
+
+            <div class="schedule-card">
+
+              <div class="schedule-card-icon">
+                <i data-lucide="clock"></i>
+              </div>
+
+              <div class="schedule-card-content">
+
+                <p class="schedule-card-title">
+                  Estudio Bíblico
+                </p>
+
+                <p class="schedule-card-time">
+                  Miércoles - 7:00 PM
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="text-center mt-8">
+
+            <button class="btn btn-primary">
+
+              <i data-lucide="bell"></i>
+
+              Activar Recordatorio
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+
+    <!-- Footer -->
+    <footer class="footer">
+
+      <div class="container">
+
+        <div class="footer-grid">
+
+          <!-- Logo and Description -->
+          <div class="footer-section">
+
+            <a href="/" class="footer-logo-link">
+
+              <div class="footer-logo-wrapper">
+
+                <img
+                  src="/static/images/logo.webp"
+                  alt="Logo"
+                  class="footer-logo-image"
+                  onerror="
+                    this.style.display = 'none';
+                    this.nextElementSibling.style.display = 'flex';
+                  "
+                />
+
+                <div class="footer-logo-fallback">
+                  CEMOA
+                </div>
+
+              </div>
+
+              <span class="footer-logo-text">
+                Iglesia CEMOA
+              </span>
+
+            </a>
+
+
+            <p class="footer-description">
+              Un lugar donde puedes crecer en tu fe, encontrar comunidad y
+              descubrir tu propósito en Cristo.
+            </p>
+
+
+            <div class="social-links">
+
+              <a
+                href="#"
+                class="social-link"
+                aria-label="Facebook"
+              >
+                <i data-lucide="facebook"></i>
+              </a>
+
+              <a
+                href="#"
+                class="social-link"
+                aria-label="Instagram"
+              >
+                <i data-lucide="instagram"></i>
+              </a>
+
+              <a
+                href="#"
+                class="social-link"
+                aria-label="YouTube"
+              >
+                <i data-lucide="youtube"></i>
+              </a>
+
+            </div>
+
+          </div>
+
+
+          <!-- Quick Links -->
+          <div class="footer-section">
+
+            <h3 class="footer-title">
+              Enlaces Rápidos
+            </h3>
+
+            <ul class="footer-links">
+
+              <li>
+                <a href="/">Inicio</a>
+              </li>
+
+              <li>
+                <a href="/adoracion">Adoración</a>
+              </li>
+
+              <li>
+                <a href="/servicios">Servicios</a>
+              </li>
+
+              <li>
+                <a href="/predicas">Prédicas</a>
+              </li>
+
+            </ul>
+
+          </div>
+
+
+          <!-- Contact Info -->
+          <div class="footer-section">
+
+            <h3 class="footer-title">
+              Contacto
+            </h3>
+
+            <ul class="footer-contact">
+
+              <li>
+                <i data-lucide="map-pin"></i>
+
+                <span>
+                  cr 9 #8b-01 Cereté - Montería
+                  (Retiro de los Indios), Cereté,
+                  Colombia, 230550
+                </span>
+              </li>
+
+              <li>
+                <i data-lucide="phone"></i>
+
+                <span>
+                  +1 (555) 123-4567
+                </span>
+              </li>
+
+              <li>
+                <i data-lucide="mail"></i>
+
+                <span>
+                  iglesiacemoa@gmail.com
+                </span>
+              </li>
+
+            </ul>
+
+          </div>
+
+
+          <!-- Service Hours -->
+          <div class="footer-section">
+
+            <h3 class="footer-title">
+              Horarios
+            </h3>
+
+            <div class="footer-schedule">
+
+              <div class="schedule-item">
+
+                <i data-lucide="clock"></i>
+
+                <div>
+
+                  <p class="schedule-day">
+                    Domingo
+                  </p>
+
+                  <p class="schedule-time">
+                    8:00 AM - Servicio Familiar
+                  </p>
+
+                  <p class="schedule-time">
+                    10:30 AM - Servicio General
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div class="schedule-item">
+
+                <i data-lucide="clock"></i>
+
+                <div>
+
+                  <p class="schedule-day">
+                    Miércoles
+                  </p>
+
+                  <p class="schedule-time">
+                    7:00 PM - Estudio Bíblico
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
-    </div>
-  </div>
-</section>
 
-<!-- Schedule Section -->
-<section class="section section-muted">
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">Horarios de Transmisión</h2>
-      <p class="section-description">
-        No te pierdas nuestras transmisiones semanales. Conéctate con nosotros
-        desde cualquier parte del mundo.
-      </p>
-    </div>
 
-    <div class="schedule-list">
-      <div class="schedule-card">
-        <div class="schedule-card-icon">
-          <i data-lucide="clock"></i>
+      <!-- Bottom Bar -->
+      <div class="footer-bottom">
+
+        <div class="container footer-bottom-content">
+
+          <p>
+            &copy; 2026 Iglesia CEMOA.
+            Todos los derechos reservados.
+          </p>
+
+          <p class="footer-verse">
+            "Porque donde están dos o tres congregados en mi nombre,
+            allí estoy yo en medio de ellos." - Mateo 18:20
+          </p>
+
         </div>
-        <div class="schedule-card-content">
-          <p class="schedule-card-title">Servicio Familiar</p>
-          <p class="schedule-card-time">Domingo - 8:00 AM</p>
-        </div>
-        <span class="live-tag">
-          <i data-lucide="radio"></i>
-          En Vivo
-        </span>
+
       </div>
 
-      <div class="schedule-card">
-        <div class="schedule-card-icon">
-          <i data-lucide="clock"></i>
-        </div>
-        <div class="schedule-card-content">
-          <p class="schedule-card-title">Servicio General</p>
-          <p class="schedule-card-time">Domingo - 10:30 AM</p>
-        </div>
-        <span class="live-tag">
-          <i data-lucide="radio"></i>
-          En Vivo
-        </span>
-      </div>
-
-      <div class="schedule-card">
-        <div class="schedule-card-icon">
-          <i data-lucide="clock"></i>
-        </div>
-        <div class="schedule-card-content">
-          <p class="schedule-card-title">Estudio Bíblico</p>
-          <p class="schedule-card-time">Miércoles - 7:00 PM</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="text-center mt-8">
-      <button class="btn btn-primary">
-        <i data-lucide="bell"></i>
-        Activar Recordatorio
-      </button>
-    </div>
-  </div>
-</section>
-{% endblock %} {% block extra_js %}
-<!-- Cambiamos a Cloudflare CDN para evitar el TIMED_OUT -->
-<script src="https://cloudflare.com"></script>
+    </footer>
 
 
-<script>
-  // Configuración de la URL de transmisión limpia y directa de SSH101 (BozzTV)
-  const streamUrl = "https://lbgo.bozztv.com/ssh101/ssh101/iglesiacemoa/playlist.m3u8";
-  const video = document.getElementById("livePlayer");
-  const statusText = document.getElementById("streamStatusText");
-  const statusLabel = document.getElementById("streamStatusLabel");
+    <!-- Scripts -->
+    <script>
 
-  // Inicialización del reproductor inteligente
-  if (HLS.isSupported()) {
-    const hls = new HLS({
-      maxBufferSize: 0,         // Evita almacenar caché innecesaria para corregir el lag
-      liveSyncDurationCount: 3, // Sincroniza al punto más cercano del en vivo
-      enableWorker: true
-    });
-    hls.loadSource(streamUrl);
-    hls.attachMedia(video);
-    
-    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-      statusText.textContent = "En Vivo";
-      statusText.style.color = "#d9534f";
-      statusLabel.textContent = "Transmitiendo ahora";
-      video.play().catch(err => console.log("Interacción requerida para audio"));
-    });
+      // ==========================================
+      // LUCIDE ICONS
+      // ==========================================
 
-    hls.on(Hls.Events.ERROR, function (event, data) {
-      if (data.fatal) {
-        statusText.textContent = "Offline";
-        statusText.style.color = "#666";
-        statusLabel.textContent = "Próximamente en vivo";
+      lucide.createIcons();
+
+
+      // ==========================================
+      // MOBILE MENU
+      // ==========================================
+
+      function toggleMobileMenu() {
+
+        const nav = document.getElementById("mobileNav");
+        const menuIcon = document.querySelector(".menu-icon");
+        const closeIcon = document.querySelector(".close-icon");
+
+        nav.classList.toggle("open");
+
+        if (nav.classList.contains("open")) {
+
+          menuIcon.style.display = "none";
+          closeIcon.style.display = "block";
+
+        } else {
+
+          menuIcon.style.display = "block";
+          closeIcon.style.display = "none";
+
+        }
+
       }
-    });
-  } 
-  // Alternativa nativa para navegadores de Apple (Safari en iPhone/iPad/Mac)
-  else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = streamUrl;
-    video.addEventListener("loadedmetadata", function() {
-      statusText.textContent = "En Vivo";
-      statusText.style.color = "#d9534f";
-      statusLabel.textContent = "Transmitiendo ahora";
-      video.play();
-    });
-  }
 
-  // Contador dinámico del tiempo de transmisión activa
-  let seconds = 0; 
-  function updateDuration() {
-    if (statusText.textContent === "En Vivo") {
-      seconds++;
-      const hours = Math.floor(seconds / 3600);
-      const mins = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
-      document.getElementById("streamDuration").textContent =
-        `${hours}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
-  }
-  setInterval(updateDuration, 1000);
 
-  // Simulación dinámica de número de espectadores de la congregación
-  function updateViewers() {
-    if (statusText.textContent === "En Vivo") {
-      const viewers = 45 + Math.floor(Math.random() * 12);
-      document.getElementById("viewerCount").textContent = viewers;
-    } else {
-      document.getElementById("viewerCount").textContent = "0";
-    }
-  }
-  setInterval(updateViewers, 4000);
-  updateViewers();
-</script>
-{% endblock %}
+      // Cerrar menú móvil al seleccionar un enlace
+
+      document
+        .querySelectorAll(".nav-link-mobile")
+        .forEach((link) => {
+
+          link.addEventListener("click", () => {
+
+            document
+              .getElementById("mobileNav")
+              .classList.remove("open");
+
+            document.querySelector(".menu-icon").style.display = "block";
+
+            document.querySelector(".close-icon").style.display = "none";
+
+          });
+
+        });
+
+
+      // ==========================================
+      // HEADER SCROLL EFFECT
+      // ==========================================
+
+      window.addEventListener("scroll", () => {
+
+        const header = document.querySelector(".header");
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 50) {
+
+          header.classList.add("scrolled");
+
+        } else {
+
+          header.classList.remove("scrolled");
+
+        }
+
+      });
+
+    </script>
+
+
+    <!-- ==========================================
+         HLS LIVE PLAYER
+         ========================================== -->
+
+    <script>
+
+      const streamUrl =
+        "https://lbgo.bozztv.com/ssh101/ssh101/iglesiacemoa/playlist.m3u8";
+
+
+      const video =
+        document.getElementById("livePlayer");
+
+      const statusText =
+        document.getElementById("streamStatusText");
+
+      const statusLabel =
+        document.getElementById("streamStatusLabel");
+
+      const viewerCount =
+        document.getElementById("viewerCount");
+
+      const streamDuration =
+        document.getElementById("streamDuration");
+
+
+      let hls = null;
+
+      let streamStarted = false;
+
+      let seconds = 0;
+
+
+      // ==========================================
+      // CAMBIAR ESTADO
+      // ==========================================
+
+      function setStatus(status, message) {
+
+        statusText.textContent = status;
+
+        statusLabel.textContent = message;
+
+      }
+
+
+      // ==========================================
+      // HLS.JS
+      // ==========================================
+
+      if (typeof Hls !== "undefined" && Hls.isSupported()) {
+
+        console.log("HLS.js compatible con este navegador.");
+
+        hls = new Hls({
+
+          maxBufferSize: 0,
+
+          liveSyncDurationCount: 3,
+
+          enableWorker: true,
+
+          lowLatencyMode: true
+
+        });
+
+
+        // Cargar transmisión
+
+        setStatus(
+          "Conectando...",
+          "Conectando con la transmisión"
+        );
+
+
+        hls.loadSource(streamUrl);
+
+        hls.attachMedia(video);
+
+
+        // Manifest cargado
+
+        hls.on(
+          Hls.Events.MANIFEST_PARSED,
+          function () {
+
+            console.log("Manifest HLS cargado correctamente.");
+
+            setStatus(
+              "En Vivo",
+              "Transmisión disponible"
+            );
+
+            video
+              .play()
+              .catch((error) => {
+
+                console.log(
+                  "Autoplay bloqueado:",
+                  error
+                );
+
+              });
+
+          }
+        );
+
+
+        // Video realmente reproduciéndose
+
+        video.addEventListener(
+          "playing",
+          function () {
+
+            streamStarted = true;
+
+            setStatus(
+              "En Vivo",
+              "Transmitiendo ahora"
+            );
+
+          }
+        );
+
+
+        // Buffering
+
+        video.addEventListener(
+          "waiting",
+          function () {
+
+            if (streamStarted) {
+
+              setStatus(
+                "Buffering...",
+                "Esperando señal"
+              );
+
+            }
+
+          }
+        );
+
+
+        // Reproducción detenida
+
+        video.addEventListener(
+          "stalled",
+          function () {
+
+            if (streamStarted) {
+
+              setStatus(
+                "Conectando...",
+                "La señal se está recuperando"
+              );
+
+            }
+
+          }
+        );
+
+
+        // Errores HLS
+
+        hls.on(
+          Hls.Events.ERROR,
+          function (event, data) {
+
+            console.error(
+              "Error HLS:",
+              data
+            );
+
+
+            if (!data.fatal) {
+              return;
+            }
+
+
+            switch (data.type) {
+
+              case Hls.ErrorTypes.NETWORK_ERROR:
+
+                console.log(
+                  "Error de red. Intentando recuperar..."
+                );
+
+                setStatus(
+                  "Conectando...",
+                  "Recuperando transmisión"
+                );
+
+                hls.startLoad();
+
+                break;
+
+
+              case Hls.ErrorTypes.MEDIA_ERROR:
+
+                console.log(
+                  "Error multimedia. Intentando recuperar..."
+                );
+
+                setStatus(
+                  "Recuperando...",
+                  "Corrigiendo reproducción"
+                );
+
+                hls.recoverMediaError();
+
+                break;
+
+
+              default:
+
+                console.error(
+                  "Error HLS fatal:",
+                  data
+                );
+
+                setStatus(
+                  "Offline",
+                  "Transmisión no disponible"
+                );
+
+                hls.destroy();
+
+                break;
+
+            }
+
+          }
+        );
+
+
+      }
+
+      // ==========================================
+      // SAFARI / HLS NATIVO
+      // ==========================================
+
+      else if (
+        video.canPlayType(
+          "application/vnd.apple.mpegurl"
+        )
+      ) {
+
+        console.log(
+          "Usando reproducción HLS nativa."
+        );
+
+
+        setStatus(
+          "Conectando...",
+          "Conectando con la transmisión"
+        );
+
+
+        video.src = streamUrl;
+
+
+        video.addEventListener(
+          "loadedmetadata",
+          function () {
+
+            setStatus(
+              "En Vivo",
+              "Transmisión disponible"
+            );
+
+
+            video
+              .play()
+              .catch((error) => {
+
+                console.log(
+                  "Autoplay bloqueado:",
+                  error
+                );
+
+              });
+
+          }
+        );
+
+
+        video.addEventListener(
+          "playing",
+          function () {
+
+            streamStarted = true;
+
+            setStatus(
+              "En Vivo",
+              "Transmitiendo ahora"
+            );
+
+          }
+        );
+
+
+        video.addEventListener(
+          "waiting",
+          function () {
+
+            setStatus(
+              "Buffering...",
+              "Esperando señal"
+            );
+
+          }
+        );
+
+      }
+
+
+      // ==========================================
+      // NAVEGADOR NO COMPATIBLE
+      // ==========================================
+
+      else {
+
+        console.error(
+          "Este navegador no soporta HLS."
+        );
+
+
+        setStatus(
+          "No compatible",
+          "Tu navegador no soporta HLS"
+        );
+
+      }
+
+
+      // ==========================================
+      // ERROR DEL VIDEO
+      // ==========================================
+
+      video.addEventListener(
+        "error",
+        function () {
+
+          console.error(
+            "Error del elemento de video:",
+            video.error
+          );
+
+          setStatus(
+            "Error",
+            "No se pudo reproducir la transmisión"
+          );
+
+        }
+      );
+
+
+      // ==========================================
+      // DURACIÓN DE LA TRANSMISIÓN
+      // ==========================================
+
+      function updateDuration() {
+
+        if (
+          streamStarted &&
+          !video.paused &&
+          !video.ended
+        ) {
+
+          seconds++;
+
+
+          const hours =
+            Math.floor(seconds / 3600);
+
+
+          const mins =
+            Math.floor(
+              (seconds % 3600) / 60
+            );
+
+
+          const secs =
+            seconds % 60;
+
+
+          streamDuration.textContent =
+            `${hours}:` +
+            `${mins
+              .toString()
+              .padStart(2, "0")}:` +
+            `${secs
+              .toString()
+              .padStart(2, "0")}`;
+
+        }
+
+      }
+
+
+      setInterval(
+        updateDuration,
+        1000
+      );
+
+
+      // ==========================================
+      // ESPECTADORES
+      // ==========================================
+      //
+      // NOTA:
+      // Este contador sigue siendo una simulación.
+      // No representa espectadores reales.
+      //
+
+
+      function updateViewers() {
+
+        if (streamStarted) {
+
+          const viewers =
+            45 +
+            Math.floor(
+              Math.random() * 12
+            );
+
+
+          viewerCount.textContent =
+            viewers;
+
+        } else {
+
+          viewerCount.textContent =
+            "0";
+
+        }
+
+      }
+
+
+      setInterval(
+        updateViewers,
+        4000
+      );
+
+
+      updateViewers();
+
+    </script>
+
+  </body>
+</html>
