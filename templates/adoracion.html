@@ -118,8 +118,9 @@
   </div>
 </section>
 {% endblock %} {% block extra_js %}
-<!-- Cargamos la librería Hls.js de forma segura -->
-<script src="https://jsdelivr.net"></script>
+<!-- Cambiamos a Cloudflare CDN para evitar el TIMED_OUT -->
+<script src="https://cloudflare.com"></script>
+
 
 <script>
   // Configuración de la URL de transmisión limpia y directa de SSH101 (BozzTV)
