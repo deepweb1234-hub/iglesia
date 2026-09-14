@@ -709,452 +709,572 @@
          HLS LIVE PLAYER
          ========================================== -->
 
-    <script>
+   <script>
+  // ============================================================
+  // CONFIGURACIÓN DEL STREAM
+  // ============================================================
 
-      const streamUrl =
-        "https://lbgo.bozztv.com/ssh101/ssh101/iglesiacemoa/playlist.m3u8";
+  const streamUrl =
+    "https://lbgo.bozztv.com/ssh101/ssh101/iglesiacemoa/playlist.m3u8";
 
+  const video = document.getElementById("livePlayer");
+  const statusText = document.getElementById("streamStatusText");
+  const statusLabel = document.getElementById("streamStatusLabel");
+  const viewerCount = document.getElementById("viewerCount");
+  const streamDuration = document.getElementById("streamDuration");
 
-      const video =
-        document.getElementById("livePlayer");
+  let hls = null;
+  let streamStarted = false;
+  let seconds = 0;
 
-      const statusText =
-        document.getElementById("streamStatusText");
 
-      const statusLabel =
-        document.getElementById("streamStatusLabel");
+  // ============================================================
+  // ESTADO
+  // ============================================================
 
-      const viewerCount =
-        document.getElementById("viewerCount");
+  function setStatus(status, message) {
+    statusText.textContent = status;
+    statusLabel.textContent = message;
+  }
 
-      const streamDuration =
-        document.getElementById("streamDuration");
 
+  // ============================================================
+  // HLS.JS
+  // ============================================================
 
-      let hls = null;
+  if (typeof Hls !== "undefined" && Hls.isSupported()) {
 
-      let streamStarted = false;
+    console.log("HLS.js detectado.");
 
-      let seconds = 0;
+    setStatus(
+      "Conectando...",
+      "Conectando con la transmisión"
+    );
 
 
-      // ==========================================
-      // CAMBIAR ESTADO
-      // ==========================================
+    hls = new Hls({
 
-      function setStatus(status, message) {
+      // IMPORTANTE PARA LIVE
+      startPosition: -1,
 
-        statusText.textContent = status;
+      // Mantenerse cerca del directo
+      liveSyncDurationCount: 2,
 
-        statusLabel.textContent = message;
+      // Tolerancia máxima antes de considerar que
+      // estamos demasiado atrasados
+      liveMaxLatencyDurationCount: 5,
 
-      }
+      // Recuperación de red
+      manifestLoadingMaxRetry: 6,
+      levelLoadingMaxRetry: 6,
+      fragLoadingMaxRetry: 6,
 
+      // Workers
+      enableWorker: true,
 
-      // ==========================================
-      // HLS.JS
-      // ==========================================
+      // Baja latencia
+      lowLatencyMode: true,
 
-      if (typeof Hls !== "undefined" && Hls.isSupported()) {
+      // Evitar que el reproductor acumule demasiado
+      backBufferLength: 30,
 
-        console.log("HLS.js compatible con este navegador.");
+      // No intentar conservar una posición vieja
+      startFragPrefetch: true
+    });
 
-        hls = new Hls({
 
-          maxBufferSize: 0,
+    // ==========================================================
+    // CARGAR STREAM
+    // ==========================================================
 
-          liveSyncDurationCount: 3,
+    hls.loadSource(streamUrl);
 
-          enableWorker: true,
+    hls.attachMedia(video);
 
-          lowLatencyMode: true
 
-        });
+    // ==========================================================
+    // MANIFEST CARGADO
+    // ==========================================================
 
+    hls.on(
+      Hls.Events.MANIFEST_PARSED,
+      function () {
 
-        // Cargar transmisión
-
-        setStatus(
-          "Conectando...",
-          "Conectando con la transmisión"
-        );
-
-
-        hls.loadSource(streamUrl);
-
-        hls.attachMedia(video);
-
-
-        // Manifest cargado
-
-        hls.on(
-          Hls.Events.MANIFEST_PARSED,
-          function () {
-
-            console.log("Manifest HLS cargado correctamente.");
-
-            setStatus(
-              "En Vivo",
-              "Transmisión disponible"
-            );
-
-            video
-              .play()
-              .catch((error) => {
-
-                console.log(
-                  "Autoplay bloqueado:",
-                  error
-                );
-
-              });
-
-          }
-        );
-
-
-        // Video realmente reproduciéndose
-
-        video.addEventListener(
-          "playing",
-          function () {
-
-            streamStarted = true;
-
-            setStatus(
-              "En Vivo",
-              "Transmitiendo ahora"
-            );
-
-          }
-        );
-
-
-        // Buffering
-
-        video.addEventListener(
-          "waiting",
-          function () {
-
-            if (streamStarted) {
-
-              setStatus(
-                "Buffering...",
-                "Esperando señal"
-              );
-
-            }
-
-          }
-        );
-
-
-        // Reproducción detenida
-
-        video.addEventListener(
-          "stalled",
-          function () {
-
-            if (streamStarted) {
-
-              setStatus(
-                "Conectando...",
-                "La señal se está recuperando"
-              );
-
-            }
-
-          }
-        );
-
-
-        // Errores HLS
-
-        hls.on(
-          Hls.Events.ERROR,
-          function (event, data) {
-
-            console.error(
-              "Error HLS:",
-              data
-            );
-
-
-            if (!data.fatal) {
-              return;
-            }
-
-
-            switch (data.type) {
-
-              case Hls.ErrorTypes.NETWORK_ERROR:
-
-                console.log(
-                  "Error de red. Intentando recuperar..."
-                );
-
-                setStatus(
-                  "Conectando...",
-                  "Recuperando transmisión"
-                );
-
-                hls.startLoad();
-
-                break;
-
-
-              case Hls.ErrorTypes.MEDIA_ERROR:
-
-                console.log(
-                  "Error multimedia. Intentando recuperar..."
-                );
-
-                setStatus(
-                  "Recuperando...",
-                  "Corrigiendo reproducción"
-                );
-
-                hls.recoverMediaError();
-
-                break;
-
-
-              default:
-
-                console.error(
-                  "Error HLS fatal:",
-                  data
-                );
-
-                setStatus(
-                  "Offline",
-                  "Transmisión no disponible"
-                );
-
-                hls.destroy();
-
-                break;
-
-            }
-
-          }
-        );
-
-
-      }
-
-      // ==========================================
-      // SAFARI / HLS NATIVO
-      // ==========================================
-
-      else if (
-        video.canPlayType(
-          "application/vnd.apple.mpegurl"
-        )
-      ) {
+        console.log("MANIFEST HLS CARGADO");
 
         console.log(
-          "Usando reproducción HLS nativa."
+          "¿Es LIVE?:",
+          hls.liveSyncPosition !== null
+        );
+
+        console.log(
+          "Live Sync Position:",
+          hls.liveSyncPosition
+        );
+
+        console.log(
+          "Video duration:",
+          video.duration
         );
 
 
         setStatus(
-          "Conectando...",
-          "Conectando con la transmisión"
+          "En Vivo",
+          "Transmisión disponible"
         );
 
 
-        video.src = streamUrl;
+        // ======================================================
+        // IR DIRECTAMENTE AL LIVE EDGE
+        // ======================================================
 
+        setTimeout(function () {
 
-        video.addEventListener(
-          "loadedmetadata",
-          function () {
+          if (
+            hls.liveSyncPosition !== null &&
+            hls.liveSyncPosition !== undefined
+          ) {
 
-            setStatus(
-              "En Vivo",
-              "Transmisión disponible"
+            console.log(
+              "Saltando al LIVE EDGE:",
+              hls.liveSyncPosition
             );
 
-
-            video
-              .play()
-              .catch((error) => {
-
-                console.log(
-                  "Autoplay bloqueado:",
-                  error
-                );
-
-              });
+            video.currentTime =
+              hls.liveSyncPosition;
 
           }
-        );
 
+          video.play().catch(function (error) {
 
-        video.addEventListener(
-          "playing",
-          function () {
-
-            streamStarted = true;
-
-            setStatus(
-              "En Vivo",
-              "Transmitiendo ahora"
+            console.log(
+              "Autoplay bloqueado:",
+              error
             );
 
-          }
-        );
+          });
+
+        }, 300);
+
+      }
+    );
 
 
-        video.addEventListener(
-          "waiting",
-          function () {
+    // ==========================================================
+    // FRAGMENTO CARGADO
+    // ==========================================================
 
-            setStatus(
-              "Buffering...",
-              "Esperando señal"
-            );
+    hls.on(
+      Hls.Events.FRAG_LOADED,
+      function (event, data) {
 
-          }
+        console.log(
+          "Segmento recibido:",
+          data.frag.sn
         );
 
       }
+    );
 
 
-      // ==========================================
-      // NAVEGADOR NO COMPATIBLE
-      // ==========================================
+    // ==========================================================
+    // VIDEO REPRODUCIÉNDOSE
+    // ==========================================================
 
-      else {
+    video.addEventListener(
+      "playing",
+      function () {
 
-        console.error(
-          "Este navegador no soporta HLS."
-        );
-
+        streamStarted = true;
 
         setStatus(
-          "No compatible",
-          "Tu navegador no soporta HLS"
+          "En Vivo",
+          "Transmitiendo ahora"
         );
 
       }
+    );
 
 
-      // ==========================================
-      // ERROR DEL VIDEO
-      // ==========================================
+    // ==========================================================
+    // BUFFERING
+    // ==========================================================
 
-      video.addEventListener(
-        "error",
-        function () {
-
-          console.error(
-            "Error del elemento de video:",
-            video.error
-          );
-
-          setStatus(
-            "Error",
-            "No se pudo reproducir la transmisión"
-          );
-
-        }
-      );
-
-
-      // ==========================================
-      // DURACIÓN DE LA TRANSMISIÓN
-      // ==========================================
-
-      function updateDuration() {
-
-        if (
-          streamStarted &&
-          !video.paused &&
-          !video.ended
-        ) {
-
-          seconds++;
-
-
-          const hours =
-            Math.floor(seconds / 3600);
-
-
-          const mins =
-            Math.floor(
-              (seconds % 3600) / 60
-            );
-
-
-          const secs =
-            seconds % 60;
-
-
-          streamDuration.textContent =
-            `${hours}:` +
-            `${mins
-              .toString()
-              .padStart(2, "0")}:` +
-            `${secs
-              .toString()
-              .padStart(2, "0")}`;
-
-        }
-
-      }
-
-
-      setInterval(
-        updateDuration,
-        1000
-      );
-
-
-      // ==========================================
-      // ESPECTADORES
-      // ==========================================
-      //
-      // NOTA:
-      // Este contador sigue siendo una simulación.
-      // No representa espectadores reales.
-      //
-
-
-      function updateViewers() {
+    video.addEventListener(
+      "waiting",
+      function () {
 
         if (streamStarted) {
 
-          const viewers =
-            45 +
-            Math.floor(
-              Math.random() * 12
-            );
-
-
-          viewerCount.textContent =
-            viewers;
-
-        } else {
-
-          viewerCount.textContent =
-            "0";
+          setStatus(
+            "Buffering...",
+            "Esperando señal"
+          );
 
         }
 
       }
+    );
 
 
-      setInterval(
-        updateViewers,
-        4000
+    // ==========================================================
+    // STREAM DETENIDO
+    // ==========================================================
+
+    video.addEventListener(
+      "stalled",
+      function () {
+
+        console.log(
+          "STREAM STALLED"
+        );
+
+        setStatus(
+          "Conectando...",
+          "Recuperando señal"
+        );
+
+      }
+    );
+
+
+    // ==========================================================
+    // ERROR HLS
+    // ==========================================================
+
+    hls.on(
+      Hls.Events.ERROR,
+      function (event, data) {
+
+        console.error(
+          "ERROR HLS:",
+          data
+        );
+
+
+        if (!data.fatal) {
+          return;
+        }
+
+
+        switch (data.type) {
+
+
+          // ----------------------------------------------------
+          // ERROR DE RED
+          // ----------------------------------------------------
+
+          case Hls.ErrorTypes.NETWORK_ERROR:
+
+            console.log(
+              "Error de red. Reiniciando carga..."
+            );
+
+            setStatus(
+              "Conectando...",
+              "Recuperando transmisión"
+            );
+
+            hls.startLoad();
+
+            break;
+
+
+          // ----------------------------------------------------
+          // ERROR DE VIDEO
+          // ----------------------------------------------------
+
+          case Hls.ErrorTypes.MEDIA_ERROR:
+
+            console.log(
+              "Error multimedia. Recuperando..."
+            );
+
+            setStatus(
+              "Recuperando...",
+              "Corrigiendo reproducción"
+            );
+
+            hls.recoverMediaError();
+
+            break;
+
+
+          // ----------------------------------------------------
+          // ERROR DESCONOCIDO
+          // ----------------------------------------------------
+
+          default:
+
+            console.error(
+              "Error HLS fatal."
+            );
+
+            setStatus(
+              "Offline",
+              "Transmisión no disponible"
+            );
+
+            hls.destroy();
+
+            break;
+        }
+
+      }
+    );
+
+
+    // ==========================================================
+    // MANTENERSE EN EL LIVE EDGE
+    // ==========================================================
+
+    setInterval(function () {
+
+      if (
+        !hls ||
+        !streamStarted
+      ) {
+        return;
+      }
+
+
+      if (
+        hls.liveSyncPosition === null ||
+        hls.liveSyncPosition === undefined
+      ) {
+        return;
+      }
+
+
+      const livePosition =
+        hls.liveSyncPosition;
+
+      const currentPosition =
+        video.currentTime;
+
+
+      const difference =
+        livePosition - currentPosition;
+
+
+      console.log(
+        "LIVE:",
+        livePosition.toFixed(2),
+        "CURRENT:",
+        currentPosition.toFixed(2),
+        "ATRASO:",
+        difference.toFixed(2)
       );
 
 
-      updateViewers();
+      // Si estamos más de 8 segundos atrasados,
+      // regresar automáticamente al directo.
 
-    </script>
+      if (difference > 8) {
 
-  </body>
+        console.log(
+          "Demasiado atrasado. Regresando al LIVE EDGE."
+        );
+
+        video.currentTime =
+          livePosition;
+
+      }
+
+    }, 3000);
+
+  }
+
+
+  // ============================================================
+  // SAFARI / HLS NATIVO
+  // ============================================================
+
+  else if (
+    video.canPlayType(
+      "application/vnd.apple.mpegurl"
+    )
+  ) {
+
+    console.log(
+      "Usando HLS nativo."
+    );
+
+
+    setStatus(
+      "Conectando...",
+      "Conectando con la transmisión"
+    );
+
+
+    video.src = streamUrl;
+
+
+    video.addEventListener(
+      "loadedmetadata",
+      function () {
+
+        console.log(
+          "Metadata HLS cargada."
+        );
+
+
+        setStatus(
+          "En Vivo",
+          "Transmisión disponible"
+        );
+
+
+        video.play().catch(function (error) {
+
+          console.log(
+            "Autoplay bloqueado:",
+            error
+          );
+
+        });
+
+      }
+    );
+
+
+    video.addEventListener(
+      "playing",
+      function () {
+
+        streamStarted = true;
+
+        setStatus(
+          "En Vivo",
+          "Transmitiendo ahora"
+        );
+
+      }
+    );
+
+  }
+
+
+  // ============================================================
+  // NAVEGADOR NO COMPATIBLE
+  // ============================================================
+
+  else {
+
+    console.error(
+      "Este navegador no soporta HLS."
+    );
+
+
+    setStatus(
+      "No compatible",
+      "Tu navegador no soporta HLS"
+    );
+
+  }
+
+
+  // ============================================================
+  // ERROR DEL VIDEO
+  // ============================================================
+
+  video.addEventListener(
+    "error",
+    function () {
+
+      console.error(
+        "VIDEO ERROR:",
+        video.error
+      );
+
+      setStatus(
+        "Error",
+        "No se pudo reproducir la transmisión"
+      );
+
+    }
+  );
+
+
+  // ============================================================
+  // DURACIÓN
+  // ============================================================
+
+  function updateDuration() {
+
+    if (
+      streamStarted &&
+      !video.paused &&
+      !video.ended
+    ) {
+
+      seconds++;
+
+
+      const hours =
+        Math.floor(seconds / 3600);
+
+
+      const mins =
+        Math.floor(
+          (seconds % 3600) / 60
+        );
+
+
+      const secs =
+        seconds % 60;
+
+
+      streamDuration.textContent =
+        `${hours}:` +
+        `${mins.toString().padStart(2, "0")}:` +
+        `${secs.toString().padStart(2, "0")}`;
+
+    }
+
+  }
+
+
+  setInterval(
+    updateDuration,
+    1000
+  );
+
+
+  // ============================================================
+  // CONTADOR DE ESPECTADORES
+  // ============================================================
+
+  function updateViewers() {
+
+    if (streamStarted) {
+
+      const viewers =
+        45 +
+        Math.floor(
+          Math.random() * 12
+        );
+
+      viewerCount.textContent =
+        viewers;
+
+    } else {
+
+      viewerCount.textContent =
+        "0";
+
+    }
+
+  }
+
+
+  setInterval(
+    updateViewers,
+    4000
+  );
+
+
+  updateViewers();
+
+</script>  </body>
 </html>
