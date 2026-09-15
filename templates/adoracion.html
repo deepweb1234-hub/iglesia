@@ -23,8 +23,12 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- HLS.js -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- Video.js -->
+    <link
+      href="https://vjs.zencdn.net/8.23.4/video-js.css"
+      rel="stylesheet"
+    />
+    <script src="https://vjs.zencdn.net/8.23.4/video.min.js"></script>
 
     <!-- Main CSS -->
     <link
@@ -182,22 +186,18 @@
               "
             >
 
-              <!-- REPRODUCTOR HLS -->
+              <!-- REPRODUCTOR LIVE CON VIDEO.JS -->
               <video
                 id="livePlayer"
-                controls
+                class="video-js vjs-big-play-centered"
+                playsinline
                 autoplay
                 muted
-                playsinline
                 preload="auto"
-                style="
-                  width: 100%;
-                  height: 100%;
-                  display: block;
-                  background: #000;
-                "
               >
-                Tu navegador no soporta la reproducción de video en vivo.
+                <p class="vjs-no-js">
+                  Para ver esta transmisión, activa JavaScript en tu navegador.
+                </p>
               </video>
 
             </div>
@@ -706,575 +706,430 @@
 
 
     <!-- ==========================================
-         HLS LIVE PLAYER
+         VIDEO.JS LIVE PLAYER
          ========================================== -->
 
-   <script>
-  // ============================================================
-  // CONFIGURACIÓN DEL STREAM
-  // ============================================================
+    <script>
+      // ============================================================
+      // CONFIGURACIÓN DEL STREAM
+      // ============================================================
 
-  const streamUrl =
-    "https://lbgo.bozztv.com/ssh101/ssh101/iglesiacemoa/playlist.m3u8";
+      const streamUrl =
+        "https://lbgo.bozztv.com/ssh101/ssh101/iglesiacemoa/playlist.m3u8";
 
-  const video = document.getElementById("livePlayer");
-  const statusText = document.getElementById("streamStatusText");
-  const statusLabel = document.getElementById("streamStatusLabel");
-  const viewerCount = document.getElementById("viewerCount");
-  const streamDuration = document.getElementById("streamDuration");
+      const videoElement = document.getElementById("livePlayer");
+      const statusText = document.getElementById("streamStatusText");
+      const statusLabel = document.getElementById("streamStatusLabel");
+      const viewerCount = document.getElementById("viewerCount");
+      const streamDuration = document.getElementById("streamDuration");
 
-  let hls = null;
-  let streamStarted = false;
-  let seconds = 0;
+      let streamStarted = false;
+      let seconds = 0;
+      let player = null;
 
+      // ============================================================
+      // ESTADO
+      // ============================================================
 
-  // ============================================================
-  // ESTADO
-  // ============================================================
+      function setStatus(status, message) {
+        statusText.textContent = status;
+        statusLabel.textContent = message;
+      }
 
-  function setStatus(status, message) {
-    statusText.textContent = status;
-    statusLabel.textContent = message;
-  }
+      // ============================================================
+      // ESTILOS DEL REPRODUCTOR LIVE
+      // ============================================================
 
+      const livePlayerStyle = document.createElement("style");
+      livePlayerStyle.textContent = `
+        #livePlayer.video-js {
+          width: 100%;
+          height: 100%;
+          min-height: 360px;
+          background: #000;
+          font-family: Inter, Arial, sans-serif;
+        }
 
-  // ============================================================
-  // HLS.JS
-  // ============================================================
+        /* Ocultar COMPLETAMENTE la barra/timeline de búsqueda */
+        #livePlayer .vjs-progress-control,
+        #livePlayer .vjs-current-time,
+        #livePlayer .vjs-time-divider,
+        #livePlayer .vjs-duration,
+        #livePlayer .vjs-remaining-time,
+        #livePlayer .vjs-playback-rate,
+        #livePlayer .vjs-time-control {
+          display: none !important;
+        }
 
-  if (typeof Hls !== "undefined" && Hls.isSupported()) {
+        /* Aspecto del control LIVE */
+        #livePlayer .vjs-live-display {
+          display: inline-flex !important;
+          align-items: center;
+          font-weight: 700;
+          letter-spacing: .4px;
+          text-transform: uppercase;
+        }
 
-    console.log("HLS.js detectado.");
+        #livePlayer .vjs-live-display::before {
+          content: "";
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #ff2020;
+          margin-right: 7px;
+          box-shadow: 0 0 7px rgba(255, 32, 32, .75);
+          animation: cemoaLivePulse 1.5s infinite;
+        }
 
-    setStatus(
-      "Conectando...",
-      "Conectando con la transmisión"
-    );
+        @keyframes cemoaLivePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .45; }
+        }
 
+        /* Botón para volver al directo si el reproductor se queda atrás */
+        #livePlayer .vjs-seek-to-live-control {
+          display: inline-flex !important;
+          align-items: center;
+        }
 
-    hls = new Hls({
+        #livePlayer .vjs-seek-to-live-control .vjs-icon-placeholder::before {
+          color: #ff2020;
+        }
 
-      // IMPORTANTE PARA LIVE
-      startPosition: -1,
+        #livePlayer .vjs-control-bar {
+          background: linear-gradient(transparent, rgba(0,0,0,.82));
+          min-height: 3.5em;
+          padding: .35em .45em;
+        }
 
-      // Mantenerse cerca del directo
-      liveSyncDurationCount: 2,
+        #livePlayer .vjs-big-play-button {
+          border-radius: 50%;
+          width: 2.4em;
+          height: 2.4em;
+          line-height: 2.25em;
+          border: 0;
+          background: rgba(0,0,0,.65);
+        }
 
-      // Tolerancia máxima antes de considerar que
-      // estamos demasiado atrasados
-      liveMaxLatencyDurationCount: 5,
+        #livePlayer .vjs-big-play-button:hover {
+          background: rgba(0,0,0,.85);
+        }
 
-      // Recuperación de red
-      manifestLoadingMaxRetry: 6,
-      levelLoadingMaxRetry: 6,
-      fragLoadingMaxRetry: 6,
+        /* Evitar que parezca un reproductor VOD */
+        #livePlayer .vjs-progress-control {
+          pointer-events: none !important;
+        }
 
-      // Workers
-      enableWorker: true,
-
-      // Baja latencia
-      lowLatencyMode: true,
-
-      // Evitar que el reproductor acumule demasiado
-      backBufferLength: 30,
-
-      // No intentar conservar una posición vieja
-      startFragPrefetch: true
-    });
-
-
-    // ==========================================================
-    // CARGAR STREAM
-    // ==========================================================
-
-    hls.loadSource(streamUrl);
-
-    hls.attachMedia(video);
-
-
-    // ==========================================================
-    // MANIFEST CARGADO
-    // ==========================================================
-
-    hls.on(
-      Hls.Events.MANIFEST_PARSED,
-      function () {
-
-        console.log("MANIFEST HLS CARGADO");
-
-        console.log(
-          "¿Es LIVE?:",
-          hls.liveSyncPosition !== null
-        );
-
-        console.log(
-          "Live Sync Position:",
-          hls.liveSyncPosition
-        );
-
-        console.log(
-          "Video duration:",
-          video.duration
-        );
-
-
-        setStatus(
-          "En Vivo",
-          "Transmisión disponible"
-        );
-
-
-        // ======================================================
-        // IR DIRECTAMENTE AL LIVE EDGE
-        // ======================================================
-
-        setTimeout(function () {
-
-          if (
-            hls.liveSyncPosition !== null &&
-            hls.liveSyncPosition !== undefined
-          ) {
-
-            console.log(
-              "Saltando al LIVE EDGE:",
-              hls.liveSyncPosition
-            );
-
-            video.currentTime =
-              hls.liveSyncPosition;
-
+        @media (max-width: 600px) {
+          #livePlayer.video-js {
+            min-height: 230px;
           }
+        }
+      `;
+      document.head.appendChild(livePlayerStyle);
 
-          video.play().catch(function (error) {
+      // ============================================================
+      // VIDEO.JS
+      // ============================================================
 
-            console.log(
-              "Autoplay bloqueado:",
-              error
-            );
+      if (typeof videojs === "undefined") {
+        console.error("Video.js no pudo cargarse.");
+        setStatus("Error", "No se pudo cargar el reproductor");
+      } else {
+        setStatus("Conectando...", "Conectando con la transmisión");
 
+        player = videojs("livePlayer", {
+          controls: true,
+          autoplay: true,
+          muted: true,
+          preload: "auto",
+          liveui: true,
+          fluid: true,
+          responsive: true,
+
+          // IMPORTANTE:
+          // No incluimos progressControl ni seekBar.
+          // Por eso el usuario NO tendrá una barra para adelantar
+          // o retroceder la transmisión.
+          controlBar: {
+            children: [
+              "playToggle",
+              "volumePanel",
+              "liveDisplay",
+              "seekToLive",
+              "fullscreenToggle"
+            ]
+          },
+
+          html5: {
+            vhs: {
+              overrideNative: true,
+              enableLowInitialPlaylist: true,
+              liveSyncDurationCount: 2,
+              liveMaxLatencyDurationCount: 5,
+              maxBufferLength: 30
+            }
+          }
+        });
+
+        // ==========================================================
+        // CARGAR HLS
+        // ==========================================================
+
+        player.src({
+          src: streamUrl,
+          type: "application/x-mpegURL"
+        });
+
+        console.log("Video.js iniciado.");
+        console.log("Stream:", streamUrl);
+
+        // ==========================================================
+        // STREAM LISTO
+        // ==========================================================
+
+        player.ready(function () {
+          console.log("Video.js listo.");
+
+          player.play().catch(function (error) {
+            console.log("Autoplay bloqueado:", error);
           });
+        });
 
-        }, 300);
+        player.on("loadedmetadata", function () {
+          console.log("Metadata HLS cargada.");
+          setStatus("En Vivo", "Transmisión disponible");
+        });
 
-      }
-    );
+        player.on("canplay", function () {
+          player.play().catch(function (error) {
+            console.log("Autoplay bloqueado:", error);
+          });
+        });
 
+        // ==========================================================
+        // VIDEO REPRODUCIÉNDOSE
+        // ==========================================================
 
-    // ==========================================================
-    // FRAGMENTO CARGADO
-    // ==========================================================
-
-    hls.on(
-      Hls.Events.FRAG_LOADED,
-      function (event, data) {
-
-        console.log(
-          "Segmento recibido:",
-          data.frag.sn
-        );
-
-      }
-    );
-
-
-    // ==========================================================
-    // VIDEO REPRODUCIÉNDOSE
-    // ==========================================================
-
-    video.addEventListener(
-      "playing",
-      function () {
-
-        streamStarted = true;
-
-        setStatus(
-          "En Vivo",
-          "Transmitiendo ahora"
-        );
-
-      }
-    );
-
-
-    // ==========================================================
-    // BUFFERING
-    // ==========================================================
-
-    video.addEventListener(
-      "waiting",
-      function () {
-
-        if (streamStarted) {
+        player.on("playing", function () {
+          streamStarted = true;
 
           setStatus(
-            "Buffering...",
-            "Esperando señal"
+            "En Vivo",
+            "Transmitiendo ahora"
           );
 
-        }
+          // Intentar colocarse inmediatamente en el LIVE EDGE.
+          goToLive();
+        });
 
-      }
-    );
+        // ==========================================================
+        // BUFFERING
+        // ==========================================================
 
-
-    // ==========================================================
-    // STREAM DETENIDO
-    // ==========================================================
-
-    video.addEventListener(
-      "stalled",
-      function () {
-
-        console.log(
-          "STREAM STALLED"
-        );
-
-        setStatus(
-          "Conectando...",
-          "Recuperando señal"
-        );
-
-      }
-    );
-
-
-    // ==========================================================
-    // ERROR HLS
-    // ==========================================================
-
-    hls.on(
-      Hls.Events.ERROR,
-      function (event, data) {
-
-        console.error(
-          "ERROR HLS:",
-          data
-        );
-
-
-        if (!data.fatal) {
-          return;
-        }
-
-
-        switch (data.type) {
-
-
-          // ----------------------------------------------------
-          // ERROR DE RED
-          // ----------------------------------------------------
-
-          case Hls.ErrorTypes.NETWORK_ERROR:
-
-            console.log(
-              "Error de red. Reiniciando carga..."
+        player.on("waiting", function () {
+          if (streamStarted) {
+            setStatus(
+              "Buffering...",
+              "Esperando señal"
             );
+          }
+        });
+
+        // ==========================================================
+        // STREAM DETENIDO
+        // ==========================================================
+
+        player.on("stalled", function () {
+          console.log("STREAM STALLED");
+
+          setStatus(
+            "Conectando...",
+            "Recuperando señal"
+          );
+        });
+
+        player.on("error", function () {
+          const error = player.error();
+
+          console.error("VIDEO.JS ERROR:", error);
+
+          setStatus(
+            "Error",
+            "No se pudo reproducir la transmisión"
+          );
+
+          // Intentar recuperar automáticamente después de unos segundos.
+          setTimeout(function () {
+            if (!player) return;
+
+            console.log("Intentando recuperar la transmisión...");
 
             setStatus(
               "Conectando...",
               "Recuperando transmisión"
             );
 
-            hls.startLoad();
+            player.reset();
 
-            break;
+            player.src({
+              src: streamUrl,
+              type: "application/x-mpegURL"
+            });
 
+            player.load();
 
-          // ----------------------------------------------------
-          // ERROR DE VIDEO
-          // ----------------------------------------------------
-
-          case Hls.ErrorTypes.MEDIA_ERROR:
-
-            console.log(
-              "Error multimedia. Recuperando..."
-            );
-
-            setStatus(
-              "Recuperando...",
-              "Corrigiendo reproducción"
-            );
-
-            hls.recoverMediaError();
-
-            break;
-
-
-          // ----------------------------------------------------
-          // ERROR DESCONOCIDO
-          // ----------------------------------------------------
-
-          default:
-
-            console.error(
-              "Error HLS fatal."
-            );
-
-            setStatus(
-              "Offline",
-              "Transmisión no disponible"
-            );
-
-            hls.destroy();
-
-            break;
-        }
-
-      }
-    );
-
-
-    // ==========================================================
-    // MANTENERSE EN EL LIVE EDGE
-    // ==========================================================
-
-    setInterval(function () {
-
-      if (
-        !hls ||
-        !streamStarted
-      ) {
-        return;
-      }
-
-
-      if (
-        hls.liveSyncPosition === null ||
-        hls.liveSyncPosition === undefined
-      ) {
-        return;
-      }
-
-
-      const livePosition =
-        hls.liveSyncPosition;
-
-      const currentPosition =
-        video.currentTime;
-
-
-      const difference =
-        livePosition - currentPosition;
-
-
-      console.log(
-        "LIVE:",
-        livePosition.toFixed(2),
-        "CURRENT:",
-        currentPosition.toFixed(2),
-        "ATRASO:",
-        difference.toFixed(2)
-      );
-
-
-      // Si estamos más de 8 segundos atrasados,
-      // regresar automáticamente al directo.
-
-      if (difference > 8) {
-
-        console.log(
-          "Demasiado atrasado. Regresando al LIVE EDGE."
-        );
-
-        video.currentTime =
-          livePosition;
-
-      }
-
-    }, 3000);
-
-  }
-
-
-  // ============================================================
-  // SAFARI / HLS NATIVO
-  // ============================================================
-
-  else if (
-    video.canPlayType(
-      "application/vnd.apple.mpegurl"
-    )
-  ) {
-
-    console.log(
-      "Usando HLS nativo."
-    );
-
-
-    setStatus(
-      "Conectando...",
-      "Conectando con la transmisión"
-    );
-
-
-    video.src = streamUrl;
-
-
-    video.addEventListener(
-      "loadedmetadata",
-      function () {
-
-        console.log(
-          "Metadata HLS cargada."
-        );
-
-
-        setStatus(
-          "En Vivo",
-          "Transmisión disponible"
-        );
-
-
-        video.play().catch(function (error) {
-
-          console.log(
-            "Autoplay bloqueado:",
-            error
-          );
-
+            player.play().catch(function (playError) {
+              console.log("Autoplay bloqueado:", playError);
+            });
+          }, 5000);
         });
 
+        // ==========================================================
+        // IR AL DIRECTO
+        // ==========================================================
+
+        function goToLive() {
+          if (!player || !player.liveTracker) return;
+
+          try {
+            if (player.liveTracker.isLive()) {
+              player.liveTracker.seekToLiveEdge();
+              console.log("Regresando al LIVE EDGE.");
+            }
+          } catch (error) {
+            console.log("No se pudo ir al LIVE EDGE:", error);
+          }
+        }
+
+        // ==========================================================
+        // IMPEDIR BÚSQUEDA MANUAL
+        // ==========================================================
+
+        // Aunque no existe una barra de progreso, también bloqueamos
+        // teclas que normalmente pueden cambiar la posición del video.
+        player.on("keydown", function (event) {
+          const blockedKeys = [
+            "ArrowLeft",
+            "ArrowRight",
+            "Home",
+            "End"
+          ];
+
+          if (blockedKeys.includes(event.key)) {
+            event.preventDefault();
+            event.stopPropagation();
+            goToLive();
+          }
+        });
+
+        // Evitar que cambios externos de currentTime dejen al usuario
+        // navegando libremente por el buffer.
+        let lastKnownTime = 0;
+
+        player.on("timeupdate", function () {
+          const currentTime = player.currentTime();
+
+          if (typeof currentTime === "number" && !isNaN(currentTime)) {
+            lastKnownTime = currentTime;
+          }
+        });
+
+        // ==========================================================
+        // MANTENERSE CERCA DEL LIVE EDGE
+        // ==========================================================
+
+        setInterval(function () {
+          if (!player || !streamStarted || !player.liveTracker) {
+            return;
+          }
+
+          try {
+            if (!player.liveTracker.isLive()) {
+              return;
+            }
+
+            const liveTime = player.liveTracker.liveCurrentTime();
+            const currentTime = player.currentTime();
+
+            if (
+              typeof liveTime !== "number" ||
+              typeof currentTime !== "number" ||
+              isNaN(liveTime) ||
+              isNaN(currentTime)
+            ) {
+              return;
+            }
+
+            const difference = liveTime - currentTime;
+
+            console.log(
+              "LIVE:", liveTime.toFixed(2),
+              "CURRENT:", currentTime.toFixed(2),
+              "ATRASO:", difference.toFixed(2)
+            );
+
+            // Si por cualquier motivo queda más de 8 segundos atrás,
+            // volver automáticamente al directo.
+            if (difference > 8) {
+              console.log(
+                "Demasiado atrasado. Regresando al LIVE EDGE."
+              );
+
+              goToLive();
+            }
+          } catch (error) {
+            console.log("Error comprobando LIVE EDGE:", error);
+          }
+        }, 3000);
       }
-    );
 
+      // ============================================================
+      // DURACIÓN DE LA TRANSMISIÓN
+      // ============================================================
 
-    video.addEventListener(
-      "playing",
-      function () {
+      function updateDuration() {
+        if (
+          streamStarted &&
+          player &&
+          !player.paused() &&
+          !player.ended()
+        ) {
+          seconds++;
 
-        streamStarted = true;
+          const hours = Math.floor(seconds / 3600);
 
-        setStatus(
-          "En Vivo",
-          "Transmitiendo ahora"
-        );
+          const mins = Math.floor(
+            (seconds % 3600) / 60
+          );
 
+          const secs = seconds % 60;
+
+          streamDuration.textContent =
+            `${hours}:` +
+            `${mins.toString().padStart(2, "0")}:` +
+            `${secs.toString().padStart(2, "0")}`;
+        }
       }
-    );
 
-  }
+      setInterval(updateDuration, 1000);
 
+      // ============================================================
+      // CONTADOR DE ESPECTADORES
+      // ============================================================
 
-  // ============================================================
-  // NAVEGADOR NO COMPATIBLE
-  // ============================================================
+      function updateViewers() {
+        if (streamStarted) {
+          const viewers =
+            45 + Math.floor(Math.random() * 12);
 
-  else {
+          viewerCount.textContent = viewers;
+        } else {
+          viewerCount.textContent = "0";
+        }
+      }
 
-    console.error(
-      "Este navegador no soporta HLS."
-    );
-
-
-    setStatus(
-      "No compatible",
-      "Tu navegador no soporta HLS"
-    );
-
-  }
-
-
-  // ============================================================
-  // ERROR DEL VIDEO
-  // ============================================================
-
-  video.addEventListener(
-    "error",
-    function () {
-
-      console.error(
-        "VIDEO ERROR:",
-        video.error
-      );
-
-      setStatus(
-        "Error",
-        "No se pudo reproducir la transmisión"
-      );
-
-    }
-  );
-
-
-  // ============================================================
-  // DURACIÓN
-  // ============================================================
-
-  function updateDuration() {
-
-    if (
-      streamStarted &&
-      !video.paused &&
-      !video.ended
-    ) {
-
-      seconds++;
-
-
-      const hours =
-        Math.floor(seconds / 3600);
-
-
-      const mins =
-        Math.floor(
-          (seconds % 3600) / 60
-        );
-
-
-      const secs =
-        seconds % 60;
-
-
-      streamDuration.textContent =
-        `${hours}:` +
-        `${mins.toString().padStart(2, "0")}:` +
-        `${secs.toString().padStart(2, "0")}`;
-
-    }
-
-  }
-
-
-  setInterval(
-    updateDuration,
-    1000
-  );
-
-
-  // ============================================================
-  // CONTADOR DE ESPECTADORES
-  // ============================================================
-
-  function updateViewers() {
-
-    if (streamStarted) {
-
-      const viewers =
-        45 +
-        Math.floor(
-          Math.random() * 12
-        );
-
-      viewerCount.textContent =
-        viewers;
-
-    } else {
-
-      viewerCount.textContent =
-        "0";
-
-    }
-
-  }
-
-
-  setInterval(
-    updateViewers,
-    4000
-  );
-
-
-  updateViewers();
-
-</script>  </body>
+      setInterval(updateViewers, 4000);
+      updateViewers();
+    </script>  </body>
 </html>
