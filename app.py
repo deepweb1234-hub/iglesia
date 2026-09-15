@@ -2,13 +2,116 @@
 Iglesia Vida Nueva - Flask Application
 Production-ready with Gunicorn support
 """
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, request, jsonify
 import os
+import time
+import threading
+import re
+
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+
+# ============================================================
+# CONTADOR DE ESPECTADORES EN VIVO
+# ============================================================
+
+VIEWER_TTL = 60  # segundos sin heartbeat antes de considerar desconectado
+
+active_viewers = {}
+viewers_lock = threading.Lock()
+
+VIEWER_ID_RE = re.compile(r'^[A-Za-z0-9_-]{16,128}$')
+
+
+def clean_inactive_viewers():
+    """Elimina espectadores que dejaron de enviar heartbeat."""
+    now = time.time()
+
+    with viewers_lock:
+        expired = [
+            viewer_id
+            for viewer_id, last_seen in active_viewers.items()
+            if now - last_seen > VIEWER_TTL
+        ]
+
+        for viewer_id in expired:
+            del active_viewers[viewer_id]
+
+
+def get_active_viewer_count():
+    """Devuelve la cantidad actual de espectadores activos."""
+    clean_inactive_viewers()
+
+    with viewers_lock:
+        return len(active_viewers)
+
+
+@app.route('/api/viewers/heartbeat', methods=['POST'])
+def viewer_heartbeat():
+    """Registra o actualiza la actividad de un espectador."""
+
+    data = request.get_json(silent=True) or {}
+
+    viewer_id = data.get('viewer_id')
+    playing = data.get('playing', False)
+
+    if not viewer_id or not isinstance(viewer_id, str):
+        return jsonify({
+            "success": False,
+            "error": "viewer_id requerido"
+        }), 400
+
+    if not VIEWER_ID_RE.fullmatch(viewer_id):
+        return jsonify({
+            "success": False,
+            "error": "viewer_id inválido"
+        }), 400
+
+    # Si el reproductor está reproduciendo, registrar espectador
+    if playing is True:
+        with viewers_lock:
+            active_viewers[viewer_id] = time.time()
+
+    # Si pausó, eliminarlo inmediatamente
+    else:
+        with viewers_lock:
+            active_viewers.pop(viewer_id, None)
+
+    return jsonify({
+        "success": True,
+        "viewers": get_active_viewer_count()
+    })
+
+
+@app.route('/api/viewers/count', methods=['GET'])
+def viewer_count():
+    """Devuelve el número actual de espectadores."""
+
+    return jsonify({
+        "success": True,
+        "viewers": get_active_viewer_count()
+    })
+
+
+@app.route('/api/viewers/leave', methods=['POST'])
+def viewer_leave():
+    """Elimina manualmente un espectador."""
+
+    data = request.get_json(silent=True) or {}
+    viewer_id = data.get('viewer_id')
+
+    if viewer_id and isinstance(viewer_id, str):
+        with viewers_lock:
+            active_viewers.pop(viewer_id, None)
+
+    return jsonify({
+        "success": True,
+        "viewers": get_active_viewer_count()
+    })
+
 
 # Data for the application
 SERMONS = [
