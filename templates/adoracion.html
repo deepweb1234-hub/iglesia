@@ -1115,21 +1115,152 @@
       setInterval(updateDuration, 1000);
 
       // ============================================================
-      // CONTADOR DE ESPECTADORES
+      // CONTADOR REAL DE ESPECTADORES CEMOA
       // ============================================================
+      // El servidor considera activa una sesión mientras reciba
+      // heartbeats. No guardamos nombre, correo ni IP en esta API.
 
-      function updateViewers() {
-        if (streamStarted) {
-          const viewers =
-            45 + Math.floor(Math.random() * 12);
+      const VIEWER_API_BASE = "";
+      const VIEWER_HEARTBEAT_MS = 20000;
 
-          viewerCount.textContent = viewers;
-        } else {
-          viewerCount.textContent = "0";
+      let viewerId = localStorage.getItem("cemoa_viewer_id");
+
+      if (!viewerId) {
+        const randomPart =
+          (crypto.randomUUID ? crypto.randomUUID() :
+            Math.random().toString(36).slice(2) +
+            Math.random().toString(36).slice(2));
+
+        viewerId = randomPart.replace(/[^A-Za-z0-9_-]/g, "");
+        localStorage.setItem("cemoa_viewer_id", viewerId);
+      }
+
+      let viewerHeartbeatTimer = null;
+      let viewerActive = false;
+
+      async function sendViewerHeartbeat(playing) {
+        try {
+          const response = await fetch(
+            VIEWER_API_BASE + "/api/viewers/heartbeat",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                viewer_id: viewerId,
+                playing: Boolean(playing)
+              }),
+              cache: "no-store"
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+
+          const data = await response.json();
+
+          if (typeof data.viewers === "number") {
+            viewerCount.textContent = data.viewers;
+          }
+        } catch (error) {
+          console.warn("No se pudo actualizar el contador:", error);
         }
       }
 
-      setInterval(updateViewers, 4000);
-      updateViewers();
+      function startViewerHeartbeat() {
+        if (viewerActive) return;
+
+        viewerActive = true;
+
+        sendViewerHeartbeat(true);
+
+        viewerHeartbeatTimer = setInterval(function () {
+          if (player && !player.paused() && !player.ended()) {
+            sendViewerHeartbeat(true);
+          } else {
+            stopViewerHeartbeat();
+          }
+        }, VIEWER_HEARTBEAT_MS);
+      }
+
+      function stopViewerHeartbeat() {
+        if (!viewerActive) return;
+
+        viewerActive = false;
+
+        if (viewerHeartbeatTimer) {
+          clearInterval(viewerHeartbeatTimer);
+          viewerHeartbeatTimer = null;
+        }
+
+        // keepalive permite enviar el aviso incluso al cerrar/recargar.
+        try {
+          const body = JSON.stringify({
+            viewer_id: viewerId,
+            playing: false
+          });
+
+          navigator.sendBeacon(
+            VIEWER_API_BASE + "/api/viewers/heartbeat",
+            new Blob([body], { type: "application/json" })
+          );
+        } catch (error) {
+          sendViewerHeartbeat(false);
+        }
+
+        viewerCount.textContent = "0";
+      }
+
+      // Entrar al contador solamente cuando el video realmente está
+      // reproduciéndose.
+      if (player) {
+        player.on("playing", startViewerHeartbeat);
+        player.on("pause", stopViewerHeartbeat);
+        player.on("ended", stopViewerHeartbeat);
+      }
+
+      window.addEventListener("beforeunload", function () {
+        if (!viewerActive) return;
+
+        try {
+          const body = JSON.stringify({
+            viewer_id: viewerId,
+            playing: false
+          });
+
+          navigator.sendBeacon(
+            VIEWER_API_BASE + "/api/viewers/heartbeat",
+            new Blob([body], { type: "application/json" })
+          );
+        } catch (error) {
+          // No hacemos nada: el TTL del servidor eliminará la sesión.
+        }
+      });
+
+      // Actualizar periódicamente la cifra aunque este navegador no sea
+      // el único espectador.
+      async function refreshViewerCount() {
+        try {
+          const response = await fetch(
+            VIEWER_API_BASE + "/api/viewers/count",
+            { cache: "no-store" }
+          );
+
+          if (!response.ok) return;
+
+          const data = await response.json();
+
+          if (typeof data.viewers === "number") {
+            viewerCount.textContent = data.viewers;
+          }
+        } catch (error) {
+          console.warn("No se pudo consultar espectadores:", error);
+        }
+      }
+
+      refreshViewerCount();
+      setInterval(refreshViewerCount, 20000);
     </script>  </body>
 </html>
