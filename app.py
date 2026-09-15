@@ -1,62 +1,132 @@
 """
 Iglesia Vida Nueva - Flask Application
-Production-ready with Gunicorn support
+Production-ready with Gunicorn + Redis
+
+Incluye contador de espectadores en vivo para /adoracion.
 """
+
 from flask import Flask, render_template, send_from_directory, request, jsonify
 import os
 import time
-import threading
-import re
+import redis
 
-
-app = Flask(__name__, static_folder='static', template_folder='templates')
-
-# Configuration
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 
 # ============================================================
-# CONTADOR DE ESPECTADORES EN VIVO
+# FLASK
 # ============================================================
 
-VIEWER_TTL = 60  # segundos sin heartbeat antes de considerar desconectado
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates"
+)
 
-active_viewers = {}
-viewers_lock = threading.Lock()
+app.config["SECRET_KEY"] = os.environ.get(
+    "SECRET_KEY",
+    "your-secret-key-change-in-production"
+)
 
-VIEWER_ID_RE = re.compile(r'^[A-Za-z0-9_-]{16,128}$')
+
+# ============================================================
+# REDIS
+# ============================================================
+
+REDIS_URL = os.environ.get("REDIS_URL")
+
+redis_client = None
+
+if REDIS_URL:
+    try:
+        redis_client = redis.from_url(
+            REDIS_URL,
+            decode_responses=True,
+            socket_connect_timeout=5,
+            socket_timeout=5,
+            health_check_interval=30
+        )
+
+        # Comprobamos la conexión al iniciar Flask
+        redis_client.ping()
+
+        print("Redis conectado correctamente.")
+
+    except Exception as e:
+        print(f"ADVERTENCIA: No se pudo conectar a Redis: {e}")
+        redis_client = None
+
+else:
+    print("ADVERTENCIA: REDIS_URL no está configurada.")
 
 
-def clean_inactive_viewers():
-    """Elimina espectadores que dejaron de enviar heartbeat."""
-    now = time.time()
+# ============================================================
+# CONFIGURACIÓN DEL CONTADOR
+# ============================================================
 
-    with viewers_lock:
-        expired = [
-            viewer_id
-            for viewer_id, last_seen in active_viewers.items()
-            if now - last_seen > VIEWER_TTL
-        ]
+VIEWER_TTL = 60
 
-        for viewer_id in expired:
-            del active_viewers[viewer_id]
+VIEWER_PREFIX = "cemoa:viewer:"
+
+
+# ============================================================
+# FUNCIONES DEL CONTADOR
+# ============================================================
+
+def viewer_key(viewer_id):
+    """Genera la clave Redis correspondiente a un espectador."""
+    return f"{VIEWER_PREFIX}{viewer_id}"
 
 
 def get_active_viewer_count():
-    """Devuelve la cantidad actual de espectadores activos."""
-    clean_inactive_viewers()
+    """
+    Obtiene el número aproximado de espectadores activos.
 
-    with viewers_lock:
-        return len(active_viewers)
+    Redis elimina automáticamente las claves cuando expira
+    el TTL.
+    """
+
+    if redis_client is None:
+        return 0
+
+    try:
+        keys = redis_client.scan_iter(
+            match=f"{VIEWER_PREFIX}*"
+        )
+
+        return sum(1 for _ in keys)
+
+    except Exception as e:
+        print(f"Error obteniendo espectadores: {e}")
+        return 0
 
 
-@app.route('/api/viewers/heartbeat', methods=['POST'])
+# ============================================================
+# API DEL CONTADOR
+# ============================================================
+
+@app.route("/api/viewers/heartbeat", methods=["POST"])
 def viewer_heartbeat():
-    """Registra o actualiza la actividad de un espectador."""
+    """
+    Registra o actualiza un espectador.
+
+    El frontend envía:
+
+    {
+        "viewer_id": "...",
+        "playing": true
+    }
+    """
+
+    if redis_client is None:
+        return jsonify({
+            "success": False,
+            "error": "Redis no disponible",
+            "viewers": 0
+        }), 503
 
     data = request.get_json(silent=True) or {}
 
-    viewer_id = data.get('viewer_id')
-    playing = data.get('playing', False)
+    viewer_id = data.get("viewer_id")
+    playing = data.get("playing", False)
 
     if not viewer_id or not isinstance(viewer_id, str):
         return jsonify({
@@ -64,56 +134,126 @@ def viewer_heartbeat():
             "error": "viewer_id requerido"
         }), 400
 
-    if not VIEWER_ID_RE.fullmatch(viewer_id):
+    # Evitamos IDs exageradamente largos
+    if len(viewer_id) < 16 or len(viewer_id) > 128:
         return jsonify({
             "success": False,
             "error": "viewer_id inválido"
         }), 400
 
-    # Si el reproductor está reproduciendo, registrar espectador
-    if playing is True:
-        with viewers_lock:
-            active_viewers[viewer_id] = time.time()
+    key = viewer_key(viewer_id)
 
-    # Si pausó, eliminarlo inmediatamente
-    else:
-        with viewers_lock:
-            active_viewers.pop(viewer_id, None)
+    try:
 
-    return jsonify({
-        "success": True,
-        "viewers": get_active_viewer_count()
-    })
+        if playing is True:
+
+            # Registramos al espectador y damos
+            # 60 segundos de vida a su clave.
+            redis_client.set(
+                key,
+                str(int(time.time())),
+                ex=VIEWER_TTL
+            )
+
+        else:
+
+            # Si pausó el video, lo eliminamos.
+            redis_client.delete(key)
+
+        count = get_active_viewer_count()
+
+        return jsonify({
+            "success": True,
+            "viewers": count
+        })
+
+    except Exception as e:
+
+        print(f"Error en heartbeat: {e}")
+
+        return jsonify({
+            "success": False,
+            "error": "Error interno del contador"
+        }), 500
 
 
-@app.route('/api/viewers/count', methods=['GET'])
+@app.route("/api/viewers/count", methods=["GET"])
 def viewer_count():
-    """Devuelve el número actual de espectadores."""
+    """Devuelve la cantidad actual de espectadores."""
 
-    return jsonify({
-        "success": True,
-        "viewers": get_active_viewer_count()
-    })
+    if redis_client is None:
+        return jsonify({
+            "success": False,
+            "error": "Redis no disponible",
+            "viewers": 0
+        }), 503
+
+    try:
+
+        count = get_active_viewer_count()
+
+        return jsonify({
+            "success": True,
+            "viewers": count
+        })
+
+    except Exception as e:
+
+        print(f"Error obteniendo contador: {e}")
+
+        return jsonify({
+            "success": False,
+            "error": "Error interno del contador"
+        }), 500
 
 
-@app.route('/api/viewers/leave', methods=['POST'])
+@app.route("/api/viewers/leave", methods=["POST"])
 def viewer_leave():
-    """Elimina manualmente un espectador."""
+    """Elimina inmediatamente a un espectador."""
+
+    if redis_client is None:
+        return jsonify({
+            "success": False,
+            "error": "Redis no disponible"
+        }), 503
 
     data = request.get_json(silent=True) or {}
-    viewer_id = data.get('viewer_id')
 
-    if viewer_id and isinstance(viewer_id, str):
-        with viewers_lock:
-            active_viewers.pop(viewer_id, None)
+    viewer_id = data.get("viewer_id")
 
-    return jsonify({
-        "success": True,
-        "viewers": get_active_viewer_count()
-    })
+    if not viewer_id or not isinstance(viewer_id, str):
+        return jsonify({
+            "success": False,
+            "error": "viewer_id requerido"
+        }), 400
+
+    try:
+
+        redis_client.delete(
+            viewer_key(viewer_id)
+        )
+
+        count = get_active_viewer_count()
+
+        return jsonify({
+            "success": True,
+            "viewers": count
+        })
+
+    except Exception as e:
+
+        print(f"Error eliminando espectador: {e}")
+
+        return jsonify({
+            "success": False,
+            "error": "Error interno del contador"
+        }), 500
 
 
-# Data for the application
+# ============================================================
+# DATOS DE LA APLICACIÓN
+# ============================================================
+
 SERMONS = [
     {
         "id": 1,
@@ -126,8 +266,6 @@ SERMONS = [
         "featured": True,
         "img": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8EFwjM3x0QFMNk6CjXWJbmt6hivb5D8tgXw&s",
         "video_url": "https://app.videonest.co/embed/single/1598771"
-
-        
     },
     {
         "id": 2,
@@ -181,6 +319,7 @@ SERMONS = [
     },
 ]
 
+
 SERVICES = [
     {
         "icon": "calendar",
@@ -188,7 +327,11 @@ SERVICES = [
         "day": "Domingo",
         "time": "8:00 AM",
         "description": "Un servicio diseñado para toda la familia, con actividades especiales para niños.",
-        "features": ["Escuela Dominical", "Guardería disponible", "Café de bienvenida"],
+        "features": [
+            "Escuela Dominical",
+            "Guardería disponible",
+            "Café de bienvenida"
+        ],
     },
     {
         "icon": "calendar",
@@ -196,7 +339,11 @@ SERVICES = [
         "day": "Domingo",
         "time": "10:30 AM",
         "description": "Nuestro servicio principal con adoración, predicación y tiempo de comunión.",
-        "features": ["Adoración en vivo", "Mensaje pastoral", "Oración de fe"],
+        "features": [
+            "Adoración en vivo",
+            "Mensaje pastoral",
+            "Oración de fe"
+        ],
     },
     {
         "icon": "book",
@@ -204,9 +351,14 @@ SERVICES = [
         "day": "Miércoles",
         "time": "7:00 PM",
         "description": "Profundiza en la Palabra de Dios con enseñanzas prácticas y relevantes.",
-        "features": ["Estudio versículo por versículo", "Discusión grupal", "Material de apoyo"],
+        "features": [
+            "Estudio versículo por versículo",
+            "Discusión grupal",
+            "Material de apoyo"
+        ],
     },
 ]
+
 
 MINISTRIES = [
     {
@@ -236,44 +388,84 @@ MINISTRIES = [
 ]
 
 
-# Routes
-@app.route('/')
+# ============================================================
+# RUTAS
+# ============================================================
+
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
 
-@app.route('/adoracion')
+@app.route("/adoracion")
 def adoracion():
-    return render_template('adoracion.html')
+    return render_template("adoracion.html")
 
 
-@app.route('/servicios')
+@app.route("/servicios")
 def servicios():
-    return render_template('servicios.html', services=SERVICES, ministries=MINISTRIES)
+    return render_template(
+        "servicios.html",
+        services=SERVICES,
+        ministries=MINISTRIES
+    )
 
 
-@app.route('/predicas')
+@app.route("/predicas")
 def predicas():
-    categories = ["Todas", "Fe", "Gracia", "Amor", "Propósito", "Obediencia"]
-    featured = next((s for s in SERMONS if s["featured"]), None)
-    return render_template('predicas.html', sermons=SERMONS, categories=categories, featured=featured)
+
+    categories = [
+        "Todas",
+        "Fe",
+        "Gracia",
+        "Amor",
+        "Propósito",
+        "Obediencia"
+    ]
+
+    featured = next(
+        (s for s in SERMONS if s["featured"]),
+        None
+    )
+
+    return render_template(
+        "predicas.html",
+        sermons=SERMONS,
+        categories=categories,
+        featured=featured
+    )
 
 
-@app.route('/static/<path:filename>')
+@app.route("/static/<path:filename>")
 def serve_static(filename):
-    return send_from_directory(app.static_folder, filename)
+    return send_from_directory(
+        app.static_folder,
+        filename
+    )
 
 
-# Error handlers
+# ============================================================
+# ERROR HANDLERS
+# ============================================================
+
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    return render_template("404.html"), 404
 
 
 @app.errorhandler(500)
 def internal_error(e):
-    return render_template('500.html'), 500
+    return render_template("500.html"), 500
 
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+# ============================================================
+# EJECUCIÓN LOCAL
+# ============================================================
+
+if __name__ == "__main__":
+
+    app.run(
+        debug=True,
+        host="0.0.0.0",
+        port=5000
+    )
